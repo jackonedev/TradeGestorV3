@@ -1,6 +1,6 @@
-from typing import List, Dict
 import concurrent.futures
 import datetime as dt
+from typing import Dict, List
 
 import pandas as pd
 import requests
@@ -8,16 +8,15 @@ import requests
 from tools.dates import past_timestamp
 from utils.utils import create_download_folders
 
-
-###~  VARIABLES DE ENTORNO  ~###
-## .1. Preparacion del request #TODO: (.env)
+### ~  VARIABLES DE ENTORNO  ~###
+# .1. Preparacion del request #TODO: (.env)
 URL = "https://open-api.bingx.com"
 PATH = "/openApi/swap/v2/quote/klines"
 SERVICE = URL + PATH
 LIMIT = 555
-## .2. Determinación de los periodos de cada temporalidad
+# .2. Determinación de los periodos de cada temporalidad
 now = dt.datetime.now()
-temp_mapping_dict = {#TODO: pydantic
+temp_mapping_dict = {  # TODO: pydantic
     "1w": int(past_timestamp(400, "days", now)),
     "1d": int(past_timestamp(180, "days", now)),
     "4h": int(past_timestamp(30, "days", now)),
@@ -31,12 +30,12 @@ def extract(
     activos: List[str],
     temporalidades: List[str],
     start_time_list: List[int],
-    end_time: int
-    ) -> Dict[str, Dict[str, List[Dict]]]:
+    end_time: int,
+) -> Dict[str, Dict[str, List[Dict]]]:
     """
     Extraer datos de BingX
     """
-    
+
     data = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures_submit = []
@@ -66,7 +65,9 @@ def extract(
     return data
 
 
-def transform(data: Dict[str, Dict[str, List[Dict]]]) -> Dict[str, Dict[str, pd.DataFrame]]:
+def transform(
+    data: Dict[str, Dict[str, List[Dict]]]
+) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     Transformar datos
     """
@@ -80,7 +81,7 @@ def transform(data: Dict[str, Dict[str, List[Dict]]]) -> Dict[str, Dict[str, pd.
             df["time"] = pd.to_datetime(df["time"], unit="ms")
             df["time"] = df["time"] - pd.DateOffset(hours=3)
             df = df.set_index("time")
-            #TODO: APLICAR INDICADORES
+            # TODO: APLICAR INDICADORES
             results[activo][temporalidad] = df.copy()
     print("Transformación de datos completada")
     return results

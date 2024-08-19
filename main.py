@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 import datetime as dt
 
-from etl_feed.feed import extract, transform, load
-from etl_feed.feed import temp_mapping_dict
+from etl_feed.feed import extract, load, temp_mapping_dict, transform
 
-
-
-###~  VARIABLES INICIALES  ~###
-activos = ["BTC", "ENS"] # TODO: enum contratos
+### ~  VARIABLES INICIALES  ~###
+activos = ["BTC", "ENS"]  # TODO: enum contratos
 temporalidades = ["4h", "1h", "15m", "5m"]
 now = dt.datetime.now()
 start_time_list = [temp_mapping_dict[temp] for temp in temporalidades]
