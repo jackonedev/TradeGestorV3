@@ -17,14 +17,3 @@ def past_timestamp(cantidad, periodo, date):
     past = date - delta
     timestamp = datetime.datetime.timestamp(past)
     return timestamp * 1000
-
-
-def retrasar_horas(fecha, hora=3):
-    """Comprueba si la fecha y hora están completas y les resta tres horas"""
-    # Comprobar si es una cadena de texto
-    if isinstance(fecha, str):
-        if fecha.find(":") == -1:
-            # No es una fecha y hora completa, no se aplica el retraso
-            return fecha
-    fecha_hora_retrasada = pd.to_datetime(fecha) - datetime.timedelta(hours=hora)
-    return fecha_hora_retrasada.strftime("%Y-%m-%d %H:%M:%S")
