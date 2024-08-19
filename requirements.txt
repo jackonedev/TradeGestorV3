@@ -1,0 +1,5 @@
+requests==2.32.3
+pandas==2.2.2
+ipykernel
+pyarrow==17.0.0
+autopep8==2.3.1
