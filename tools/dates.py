@@ -1,19 +1,17 @@
-import datetime
-
-import pandas as pd
+import datetime as dt
 
 
-def past_timestamp(cantidad, periodo, date):
+def past_timestamp(cantidad, periodo, date=dt.datetime.now()):
     "Devuelve en milisegundos el timestamp de hace 'cantidad' 'periodo'"
     if periodo == "mins":
-        delta = datetime.timedelta(minutes=cantidad)
+        delta = dt.timedelta(minutes=cantidad)
     elif periodo == "hours":
-        delta = datetime.timedelta(hours=cantidad)
+        delta = dt.timedelta(hours=cantidad)
     elif periodo == "days":
-        delta = datetime.timedelta(days=cantidad)
+        delta = dt.timedelta(days=cantidad)
     else:
         raise ValueError("Período inválido")
 
     past = date - delta
-    timestamp = datetime.datetime.timestamp(past)
-    return timestamp * 1000
+    timestamp = dt.datetime.timestamp(past)
+    return int(timestamp * 1000)
