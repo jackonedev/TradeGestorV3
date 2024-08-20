@@ -6,14 +6,10 @@ import pandas as pd
 import requests
 
 from tools.dates import past_timestamp
+from utils.config import KLINES_LIMIT as LIMIT
+from utils.config import KLINES_SERVICE as SERVICE
 from utils.utils import create_download_folders
 
-### ~  VARIABLES DE ENTORNO  ~###
-# .1. Preparacion del request #TODO: (.env)
-URL = "https://open-api.bingx.com"
-PATH = "/openApi/swap/v2/quote/klines"
-SERVICE = URL + PATH
-LIMIT = 555
 # .2. Determinación de los periodos de cada temporalidad
 now = dt.datetime.now()
 temp_mapping_dict = {  # TODO: pydantic
@@ -74,13 +70,16 @@ def transform(
     activos = list(data.keys())
     temporalidades = list(data[activos[0]].keys())
     results = {}
-    for i, activo in enumerate(activos):
+    for activo in activos:
         results[activo] = {}
-        for j, temporalidad in enumerate(temporalidades):
+        for temporalidad in temporalidades:
             df = pd.DataFrame(data[activo][temporalidad])
+            # Set index
             df["time"] = pd.to_datetime(df["time"], unit="ms")
             df["time"] = df["time"] - pd.DateOffset(hours=3)
             df = df.set_index("time")
+            # Convert to numeric
+            df = df.astype(float)
             # TODO: APLICAR INDICADORES
             results[activo][temporalidad] = df.copy()
     print("Transformación de datos completada")
