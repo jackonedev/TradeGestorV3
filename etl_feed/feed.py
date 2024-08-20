@@ -1,25 +1,19 @@
 import concurrent.futures
-import datetime as dt
 from typing import Dict, List
 
 import pandas as pd
 import requests
 
-from tools.dates import past_timestamp
+from tools.technical_indicators import (
+    moving_averages,
+    squeeze_momentum_indicator,
+    adx,
+    avg_true_range
+)
+
 from utils.config import KLINES_LIMIT as LIMIT
 from utils.config import KLINES_SERVICE as SERVICE
 from utils.utils import create_download_folders
-
-# .2. Determinación de los periodos de cada temporalidad
-now = dt.datetime.now()
-temp_mapping_dict = {  # TODO: pydantic
-    "1w": int(past_timestamp(400, "days", now)),
-    "1d": int(past_timestamp(180, "days", now)),
-    "4h": int(past_timestamp(30, "days", now)),
-    "1h": int(past_timestamp(8, "days", now)),
-    "15m": int(past_timestamp(36, "hours", now)),
-    "5m": int(past_timestamp(12, "hours", now)),
-}
 
 
 def extract(
@@ -80,7 +74,12 @@ def transform(
             df = df.set_index("time")
             # Convert to numeric
             df = df.astype(float)
-            # TODO: APLICAR INDICADORES
+            # Calculate technical indicators
+            df = moving_averages(df, n=12)
+            df = moving_averages(df, n=55)
+            df = squeeze_momentum_indicator(df)
+            df = adx(df)
+            df = avg_true_range(df)
             results[activo][temporalidad] = df.copy()
     print("Transformación de datos completada")
     return results
