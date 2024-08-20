@@ -1,7 +1,8 @@
 import numpy as np
+import talib
 
 
-def true_range_(df):
+def _true_range(df):
     data = df.copy()
     data["tr0"] = abs(df["high"] - df["low"])
     data["tr1"] = abs(df["high"] - df["close"].shift())
@@ -11,7 +12,7 @@ def true_range_(df):
 
 def avg_true_range(df, n=14, use_EMA=True):
     data = df.copy()
-    tr = true_range_(df)
+    tr = _true_range(df)
     if use_EMA:
         data["atr"] = tr.ewm(span=n, adjust=False).mean()
     else:
@@ -30,7 +31,7 @@ def squeeze_momentum_indicator(
     data["lower_BB"] = m_avg - mult * m_std
 
     # calculate true range
-    data["tr"] = true_range_(data)
+    data["tr"] = _true_range(data)
 
     # calculate KC
     if use_EMA:
@@ -88,4 +89,12 @@ def moving_averages(df, price="close", n=55):
     )
 
     data.drop(columns=f"TRIMA_E_{n}", inplace=True)
+    return data
+
+
+def adx(df, n=14):
+    data = df.copy()
+    data["adx"] = talib.ADX(df["high"], df["low"], df["close"], timeperiod=n)
+    data["minus_di"] = talib.MINUS_DI(df["high"], df["low"], df["close"], timeperiod=n)
+    data["plus_di"] = talib.PLUS_DI(df["high"], df["low"], df["close"], timeperiod=n)
     return data
