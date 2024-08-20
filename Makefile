@@ -24,3 +24,15 @@ DATED_ENUM_DIR := $(STORAGE_DIR)/$(DATED_ENUM_FOLDER)
 
 create_enum_folder:
 	mkdir -p $(DATED_ENUM_DIR)
+
+install_talib:
+	apt-get install -y build-essential
+	cd ~
+	wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
+	tar -xzf ta-lib-0.4.0-src.tar.gz
+	cd ta-lib
+	./configure -prefix=/usr
+	make
+	sudo make install
+	pip install TA-Lib
+	pip install numpy==1.26.4
