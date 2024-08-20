@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 import datetime as dt
 
-from etl_feed.feed import extract, load, temp_mapping_dict, transform
+from etl_feed.feed import extract, load, transform
+from tools.dates import past_timestamp
+from schemas.temporality import TempMappingModel
 
 ### ~  VARIABLES INICIALES  ~###
 activos = ["BTC", "ENS"]  # TODO: enum contratos
 temporalidades = ["4h", "1h", "15m", "5m"]
-now = dt.datetime.now()
-start_time_list = [temp_mapping_dict[temp] for temp in temporalidades]
-end_time = int(dt.datetime.timestamp(now) * 1000)
+
+temp_mapping = TempMappingModel(
+    t_1h=past_timestamp(10, "days"),
+)
+
+start_time_list = [temp_mapping.to_dict()[temp] for temp in temporalidades]
+end_time = int(dt.datetime.timestamp(temp_mapping._now) * 1000)
 
 
 if __name__ == "__main__":
