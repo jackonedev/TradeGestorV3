@@ -2,8 +2,8 @@
 import datetime as dt
 
 from etl_feed.feed import extract, load, transform
-from tools.dates import past_timestamp
 from schemas.temporality import TempMappingModel
+from tools.dates import past_timestamp
 
 ### ~  VARIABLES INICIALES  ~###
 activos = ["BTC", "ENS"]  # TODO: enum contratos
