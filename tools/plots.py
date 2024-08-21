@@ -18,23 +18,23 @@ def create_SQZMOM_bar(df):
     colors = []
     for i in range(len(df)):
         if (
-            df["SQZMOM_value"][i] > 0
-            and df["SQZMOM_value"][i] > df["SQZMOM_value"][i - 1]
+            df["SQZMOM_value"].iloc[i] > 0
+            and df["SQZMOM_value"].iloc[i] > df["SQZMOM_value"].iloc[i - 1]
         ):
             colors.append("darkgreen")  # Sección 1: Verde oscuro
         elif (
-            df["SQZMOM_value"][i] > 0
-            and df["SQZMOM_value"][i] < df["SQZMOM_value"][i - 1]
+            df["SQZMOM_value"].iloc[i] > 0
+            and df["SQZMOM_value"].iloc[i] < df["SQZMOM_value"].iloc[i - 1]
         ):
             colors.append("indianred")  # Sección 2: Rojo claro
         elif (
-            df["SQZMOM_value"][i] < 0
-            and df["SQZMOM_value"][i] < df["SQZMOM_value"][i - 1]
+            df["SQZMOM_value"].iloc[i] < 0
+            and df["SQZMOM_value"].iloc[i] < df["SQZMOM_value"].iloc[i - 1]
         ):
             colors.append("darkred")  # Sección 3: Rojo oscuro
         elif (
-            df["SQZMOM_value"][i] < 0
-            and df["SQZMOM_value"][i] > df["SQZMOM_value"][i - 1]
+            df["SQZMOM_value"].iloc[i] < 0
+            and df["SQZMOM_value"].iloc[i] > df["SQZMOM_value"].iloc[i - 1]
         ):
             colors.append("green")  # Sección 4: Verde claro
         else:
@@ -114,7 +114,8 @@ def create_bar_figure(
     return fig
 
 
-def make_subplots(figs: list, title: str):
+def make_2r_subplots(figs: list, title: str):
+    "Two rows subplots"
     kwargs = dict(
         rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.02, row_heights=[0.8, 0.2]
     )
