@@ -1,7 +1,8 @@
 import datetime as dt
-import itertools
 import os
 import random
+
+import pandas as pd
 
 from utils.config import DATASETS_PATH
 
@@ -41,19 +42,27 @@ def obtain_most_recent_download_name():
     return lista_ordenada[0]
 
 
-def obtain_download_files_structure() -> dict:
+def obtain_most_recent_download_directory_paths() -> dict:
     "Devuelve la lista de nombres de los archivos de descarga"
-    DATASETS_NAME = obtain_most_recent_download_name()
-    DATASETS_DIR = os.path.join(DATASETS_PATH, DATASETS_NAME)
-    CURRENCY_LIST = os.listdir(DATASETS_DIR)
-    TEMPORALITY_LIST = os.listdir(os.path.join(DATASETS_DIR, CURRENCY_LIST[0]))
-
+    dir_name = obtain_most_recent_download_name()
+    dir_path = os.path.join(DATASETS_PATH, dir_name)
+    currency_list = os.listdir(dir_path)
+    temporality_list = os.listdir(os.path.join(dir_path, currency_list[0]))
     structure = {}
-    for currency in CURRENCY_LIST:
+    for currency in currency_list:
         structure[currency] = {}
-        for temporalidad in TEMPORALITY_LIST:
+        for temporalidad in temporality_list:
             structure[currency][temporalidad] = os.path.join(
-                DATASETS_DIR, currency, temporalidad, "data.parquet"
+                dir_path, currency, temporalidad
             )
-
     return structure
+
+
+def obtain_most_recent_downloaded_datasets():
+    datasets_path_dict = obtain_most_recent_download_directory_paths()
+    datasets_df_dict = {}
+    for k, v in datasets_path_dict.items():
+        datasets_df_dict[k] = {}
+        for kk, vv in v.items():
+            datasets_df_dict[k][kk] = pd.read_parquet(f"{vv}/data.parquet")
+    return datasets_df_dict
