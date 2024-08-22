@@ -33,7 +33,7 @@ def create_scatter(df, column, name, color, hover=False):
         )
 
 
-def create_SQZMOM_bar(df):
+def create_SQZMOM_bar(df, normalize=False):
     colors = []
     for i in range(len(df)):
         if (
@@ -58,7 +58,19 @@ def create_SQZMOM_bar(df):
             colors.append("green")  # Sección 4: Verde claro
         else:
             colors.append("gray")
-    return go.Bar(x=df.index, y=df["SQZMOM_value"], name="SQZMOM", marker_color=colors)
+    if normalize:
+        df["SQZMOM_value"] = (
+            (df["SQZMOM_value"] - df["SQZMOM_value"].min())
+            / (df["SQZMOM_value"].max() - df["SQZMOM_value"].min())
+            * 100 - 50
+        )
+    return go.Bar(
+        x=df.index,
+        y=df["SQZMOM_value"],
+        name="SQZMOM",
+        marker_color=colors,
+        hoverinfo="x",
+    )
 
 
 def create_price_figure(
@@ -108,6 +120,7 @@ def create_bar_figure(
     Remove the legend and adjust the margins.
     I also have to consider scaling the y-axis to be able to intagrate ADX in the same figure.
     """
+    
     fig = go.Figure(data=graph_objects)
     fig.layout.xaxis.type = "category"
     fig.layout.xaxis.rangeslider.visible = False

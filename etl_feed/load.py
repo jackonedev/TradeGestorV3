@@ -3,10 +3,10 @@ from typing import Dict
 import pandas as pd
 
 from tools.plots import (
-    create_scatter,
     create_bar_figure,
     create_candlestick,
     create_price_figure,
+    create_scatter,
     create_SQZMOM_bar,
     download_html,
     make_2r_subplots,
@@ -76,13 +76,25 @@ def load(results: Dict[str, Dict[str, pd.DataFrame]], plots: bool = True) -> Non
                 TRIMA_L_55,
             ]
 
-            bar = create_SQZMOM_bar(results[activo][temporalidad])
+            sqzm_bar = create_SQZMOM_bar(results[activo][temporalidad], normalize=True)
+            adx_line = create_scatter(
+                results[activo][temporalidad] - 50, "adx", "ADX", "black", hover=True
+            )
+            plus_di = create_scatter(
+                results[activo][temporalidad] - 50, "plus_di", "plus_DI", "green", hover=True
+            )
+            minus_di = create_scatter(
+                results[activo][temporalidad] - 50, "minus_di", "minus_DI", "red", hover=True
+            )
+            objects2 = [sqzm_bar, adx_line, plus_di, minus_di]
             fig1 = create_price_figure(
                 data=results[activo][temporalidad],
                 graph_objects=objects1,
                 title=f"{activo} {temporalidad}",
             )
-            fig2 = create_bar_figure(results[activo][temporalidad], [bar])
+            fig2 = create_bar_figure(
+                data=results[activo][temporalidad], graph_objects=objects2
+            )
             plot_name = f"{activo}_{temporalidad}"
             subplot_fig = make_2r_subplots([fig1, fig2], title=plot_name)
             filename = (
