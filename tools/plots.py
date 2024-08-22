@@ -33,6 +33,26 @@ def create_scatter(df, column, name, color, hover=False):
         )
 
 
+def create_bar(df, column, name, color, hover=False):
+    if hover:
+        return go.Bar(
+            x=df.index,
+            y=df[column],
+            name=name,
+            marker_color=color,
+            hovertemplate="%{y}",
+            hoverlabel=dict(font_size=10),
+        )
+    else:
+        return go.Bar(
+            x=df.index,
+            y=df[column],
+            name=name,
+            marker_color=color,
+            hoverinfo="x",
+        )
+
+
 def create_SQZMOM_bar(df, normalize=False):
     colors = []
     for i in range(len(df)):
@@ -59,11 +79,9 @@ def create_SQZMOM_bar(df, normalize=False):
         else:
             colors.append("gray")
     if normalize:
-        df["SQZMOM_value"] = (
-            (df["SQZMOM_value"] - df["SQZMOM_value"].min())
-            / (df["SQZMOM_value"].max() - df["SQZMOM_value"].min())
-            * 100 - 50
-        )
+        df["SQZMOM_value"] = (df["SQZMOM_value"] - df["SQZMOM_value"].min()) / (
+            df["SQZMOM_value"].max() - df["SQZMOM_value"].min()
+        ) * 100 - 50
     return go.Bar(
         x=df.index,
         y=df["SQZMOM_value"],
@@ -115,12 +133,6 @@ def create_bar_figure(
     bgcolor="LightSteelBlue",
     title=None,
 ):
-    """
-    For Squeeze Momentum Indicator (SQZMOM)
-    Remove the legend and adjust the margins.
-    I also have to consider scaling the y-axis to be able to intagrate ADX in the same figure.
-    """
-    
     fig = go.Figure(data=graph_objects)
     fig.layout.xaxis.type = "category"
     fig.layout.xaxis.rangeslider.visible = False
@@ -128,7 +140,6 @@ def create_bar_figure(
     fig.update_layout(
         xaxis=dict(
             tickmode="array",
-            # considerar este value para x-ticks balance
             tickvals=data.index[dist_tick // 2 :: dist_tick],
             ticktext=[
                 indice.strftime("%d/%m--%H:%M")
@@ -148,6 +159,7 @@ def create_bar_figure(
 
 def make_2r_subplots(figs: list, title: str):
     "Two rows subplots"
+    assert len(figs) == 2, "Two figures are required, figs must be a list of 2 elements"
     kwargs = dict(
         rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.02, row_heights=[0.8, 0.2]
     )
@@ -157,6 +169,34 @@ def make_2r_subplots(figs: list, title: str):
             subplot_fig.add_trace(trace, row=i + 1, col=1)
     subplot_fig.update_layout(
         height=900,
+        template="seaborn",
+        paper_bgcolor="LightSteelBlue",
+        title=title,
+        hovermode="x",
+    )
+    # fig.layout.xaxis.type = 'category'
+    subplot_fig.layout.xaxis.rangeslider.visible = False
+    return subplot_fig
+
+
+def make_3r_subplots(figs: list, title: str):
+    "Three rows subplots"
+    assert (
+        len(figs) == 3
+    ), "Three figures are required, figs must be a list of 3 elements"
+    kwargs = dict(
+        rows=3,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.02,
+        row_heights=[0.6, 0.2, 0.2],
+    )
+    subplot_fig = ms.make_subplots(**kwargs)
+    for i, fig in enumerate(figs):
+        for trace in fig.data:
+            subplot_fig.add_trace(trace, row=i + 1, col=1)
+    subplot_fig.update_layout(
+        height=1000,
         template="seaborn",
         paper_bgcolor="LightSteelBlue",
         title=title,
