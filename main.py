@@ -4,12 +4,14 @@ import datetime as dt
 from etl_feed.extract import extract
 from etl_feed.load import load
 from etl_feed.transform import transform
+from etl_feed.transform_OP import transform_OP
 from schemas.temporality import TempMappingModel
 from tools.dates import past_timestamp
 
 ### ~  VARIABLES INICIALES  ~###
 activos = ["BTC", "ENS"]  # TODO: Enum contratos
 temporalidades = ["4h", "1h", "15m", "5m"]  # empty list = all temporalities
+temporalidades = []
 
 
 if __name__ == "__main__":
@@ -30,6 +32,6 @@ if __name__ == "__main__":
     end_time = int(dt.datetime.timestamp(temp_mapping._now) * 1000)
 
     data = extract(activos, temporalidades, start_time_list, end_time)
-    data_transformed = transform(data)
+    data_transformed = transform_OP(data)
     load(data_transformed)
     print("ETL completado")
