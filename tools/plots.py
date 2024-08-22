@@ -4,14 +4,33 @@ import plotly.subplots as ms
 
 def create_candlestick(df):
     return go.Candlestick(
-        x=df.index, open=df["open"], high=df["high"], low=df["low"], close=df["close"]
+        x=df.index,
+        open=df["open"],
+        high=df["high"],
+        low=df["low"],
+        close=df["close"],
+        hoverinfo="x",
     )
 
 
-def create_band(df, column, name, color):
-    return go.Scatter(
-        x=df.index, y=df[column], name=name, line=dict(color=color, width=1)
-    )
+def create_scatter(df, column, name, color, hover=False):
+    if hover:
+        return go.Scatter(
+            x=df.index,
+            y=df[column],
+            name=name,
+            line=dict(color=color, width=1),
+            hovertemplate="%{y}",
+            hoverlabel=dict(font_size=10),
+        )
+    else:
+        return go.Scatter(
+            x=df.index,
+            y=df[column],
+            name=name,
+            line=dict(color=color, width=1),
+            hoverinfo="x",
+        )
 
 
 def create_SQZMOM_bar(df):
@@ -128,6 +147,7 @@ def make_2r_subplots(figs: list, title: str):
         template="seaborn",
         paper_bgcolor="LightSteelBlue",
         title=title,
+        hovermode="x",
     )
     # fig.layout.xaxis.type = 'category'
     subplot_fig.layout.xaxis.rangeslider.visible = False
