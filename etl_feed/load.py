@@ -81,10 +81,18 @@ def load(results: Dict[str, Dict[str, pd.DataFrame]], plots: bool = True) -> Non
                 results[activo][temporalidad] - 50, "adx", "ADX", "black", hover=True
             )
             plus_di = create_scatter(
-                results[activo][temporalidad] - 50, "plus_di", "plus_DI", "green", hover=True
+                results[activo][temporalidad] - 50,
+                "plus_di",
+                "plus_DI",
+                "green",
+                hover=True,
             )
             minus_di = create_scatter(
-                results[activo][temporalidad] - 50, "minus_di", "minus_DI", "red", hover=True
+                results[activo][temporalidad] - 50,
+                "minus_di",
+                "minus_DI",
+                "red",
+                hover=True,
             )
             objects2 = [sqzm_bar, adx_line, plus_di, minus_di]
             fig1 = create_price_figure(
@@ -101,4 +109,3 @@ def load(results: Dict[str, Dict[str, pd.DataFrame]], plots: bool = True) -> Non
                 download_folders[i * len(temporalidades) + j] + f"/{plot_name}.html"
             )
             download_html(subplot_fig, filename)
-
