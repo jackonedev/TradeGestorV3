@@ -42,5 +42,4 @@ def extract(
             for j, interval in enumerate(temporalidades):
                 response = futures_submit[i * len(temporalidades) + j].result()
                 data[activo][interval] = response.json().get("data")
-    print("Extracción de datos completada")
     return data

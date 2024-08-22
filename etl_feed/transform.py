@@ -38,5 +38,4 @@ def transform(
             df = adx(df)
             df = avg_true_range(df)
             results[activo][temporalidad] = df.copy()
-    print("Transformación de datos completada")
     return results

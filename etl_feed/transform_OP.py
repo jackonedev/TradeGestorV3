@@ -103,6 +103,4 @@ def transform_OP(
             df = adx(df, n=best_window)
             df = avg_true_range(df, n=best_window, use_EMA=False)
             results_dict[activo][temporalidad] = df.copy()
-
-    print("Transformación de datos completada")
     return results_dict

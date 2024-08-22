@@ -101,4 +101,4 @@ def load(results: Dict[str, Dict[str, pd.DataFrame]], plots: bool = True) -> Non
                 download_folders[i * len(temporalidades) + j] + f"/{plot_name}.html"
             )
             download_html(subplot_fig, filename)
-    print("Descarga de datos completada")
+
