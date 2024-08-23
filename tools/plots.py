@@ -211,3 +211,28 @@ def download_html(fig, filename):
     with open(filename, "w") as f:
         f.write(fig.to_html())
     print(f"File saved as {filename}")
+
+
+def add_signals(serie, color) -> list:
+    """
+    add vertical lines - for DI crosses
+
+    Returns:
+        - list of Scatter objects
+    """
+    y_values = [-10, 10]
+    fig_traces = []
+    for i in range(len(serie)):
+        if serie.iloc[i] == 1:
+            x = serie.index[i]
+            fig_traces.append(
+                go.Scatter(
+                    x=[x, x],
+                    y=y_values,
+                    mode="lines",
+                    line=dict(color=color, width=1, dash="dash"),
+                    showlegend=False,
+                    name=serie.name,
+                )
+            )
+    return fig_traces
