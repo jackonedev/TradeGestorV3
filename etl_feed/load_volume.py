@@ -1,9 +1,11 @@
+import os
 from typing import Dict
 
 import numpy as np
 import pandas as pd
 
 from tools.plots import (
+    add_signals,
     create_bar,
     create_bar_figure,
     create_candlestick,
@@ -13,62 +15,66 @@ from tools.plots import (
     download_html,
     make_3r_subplots,
 )
-from utils.utils import create_download_folders
+from utils.utils import (
+    create_download_folders,
+    obtain_most_recent_download_directory_paths,
+)
 
 
 def load_volume(
     results: Dict[str, Dict[str, pd.DataFrame]], plots: bool = True
 ) -> None:
     """
-    Guardar datos en disco
+    Guarda los datos en disco y crea gráficos si se especifica.
+    Parameters:
+        results (Dict[str, Dict[str, pd.DataFrame]]): Un diccionario que contiene los resultados de los datos.
+            La estructura del diccionario es la siguiente:
+            {
+                'activo1': {
+                    'temporalidad1': DataFrame1,
+                    'temporalidad2': DataFrame2,
+                    ...
+                },
+                'activo2': {
+                    'temporalidad1': DataFrame3,
+                    'temporalidad2': DataFrame4,
+                    ...
+                },
+                ...
+            }
+        plots (bool, optional): Indica si se deben crear gráficos. Por defecto es True.
+    Returns:
+        None
     """
-    download_folders = create_download_folders(results)
-    activos = list(results.keys())
-    temporalidades = list(results[activos[0]].keys())
-    for i, activo in enumerate(activos):
-        for j, temporalidad in enumerate(temporalidades):
-            # Download Data
-            results[activo][temporalidad].to_parquet(
-                download_folders[i * len(temporalidades) + j] + "/data.parquet"
-            )
-            # Create plots
-            # Download HTML
+
+    create_download_folders(results)
+    download_paths = obtain_most_recent_download_directory_paths()
+
+    for activo, temporalidad_dict in download_paths.items():
+        for temporalidad, path in temporalidad_dict.items():
+            df = results[activo][temporalidad].copy()
+            df.to_parquet(path + "/data.parquet")
+
             if not plots:
                 continue
-    
+
             # Figure 1
-            candlestick = create_candlestick(results[activo][temporalidad])
-            upper_band = create_scatter(
-                results[activo][temporalidad], "upper_BB", "upper_BB", "red"
-            )
-            lower_band = create_scatter(
-                results[activo][temporalidad], "lower_BB", "lower_BB", "red"
-            )
-            upper_KC = create_scatter(
-                results[activo][temporalidad], "upper_KC", "upper_KC", "blue"
-            )
-            lower_KC = create_scatter(
-                results[activo][temporalidad], "lower_KC", "lower_KC", "blue"
-            )
-            WMA_12 = create_scatter(
-                results[activo][temporalidad], "WMA_12", "WMA_12", "yellow"
-            )
-            DEMA_12 = create_scatter(
-                results[activo][temporalidad], "DEMA_12", "DEMA_12", "yellow"
-            )
+            candlestick = create_candlestick(df)
+            upper_band = create_scatter(df, "upper_BB", "upper_BB", "red")
+            lower_band = create_scatter(df, "lower_BB", "lower_BB", "red")
+            upper_KC = create_scatter(df, "upper_KC", "upper_KC", "blue")
+            lower_KC = create_scatter(df, "lower_KC", "lower_KC", "blue")
+            WMA_12 = create_scatter(df, "WMA_12", "WMA_12", "yellow")
+            DEMA_12 = create_scatter(df, "DEMA_12", "DEMA_12", "yellow")
             TEMA_12 = create_scatter(
-                results[activo][temporalidad],
+                df,
                 "TEMA_12",
                 "TEMA_12",
                 "yellow",
                 hover=True,
             )
-            EMA_55 = create_scatter(
-                results[activo][temporalidad], "EMA_55", "EMA_55", "brown", hover=True
-            )
-            TRIMA_L_55 = create_scatter(
-                results[activo][temporalidad], "TRIMA_L_55", "TRIMA_L_55", "brown"
-            )
+            EMA_55 = create_scatter(df, "EMA_55", "EMA_55", "brown", hover=True)
+            TRIMA_L_55 = create_scatter(df, "TRIMA_L_55", "TRIMA_L_55", "brown")
             objects1 = [
                 candlestick,
                 upper_band,
@@ -82,66 +88,77 @@ def load_volume(
                 TRIMA_L_55,
             ]
             fig1 = create_price_figure(
-                data=results[activo][temporalidad],
+                data=df,
                 graph_objects=objects1,
                 title=f"{activo} {temporalidad}",
             )
             fig1.update_yaxes(autorange=False)
 
             # Figure 2
-            volume = create_bar(
-                results[activo][temporalidad], "volume", "Volume", "blue", hover=True
-            )
+            volume = create_bar(df, "volume", "Volume", "blue", hover=True)
             objects2 = [volume]
             fig2 = create_bar_figure(
-                data=results[activo][temporalidad],
+                data=df,
                 graph_objects=objects2,
                 title=f"{activo} {temporalidad}",
             )
             fig2.update_yaxes(autorange=False)
 
             # Figure 3
-            sqzm_bar = create_SQZMOM_bar(results[activo][temporalidad], normalize=True)
-            adx_line = create_scatter(
-                results[activo][temporalidad] - 50, "adx", "ADX", "black", hover=True
-            )
+            sqzm_bar = create_SQZMOM_bar(df, normalize=True)
+            adx_line = create_scatter(df - 50, "adx", "ADX", "black", hover=True)
             plus_di = create_scatter(
-                results[activo][temporalidad] - 50,
+                df - 50,
                 "plus_di",
                 "plus_DI",
                 "green",
                 hover=True,
             )
             minus_di = create_scatter(
-                results[activo][temporalidad] - 50,
+                df - 50,
                 "minus_di",
                 "minus_DI",
                 "red",
                 hover=True,
             )
-            results[activo][temporalidad]["squeeze_on"] = np.where(results[activo][temporalidad]["squeeze_on"] == 1, 0, None)
+            # Definicion de señal de squeeze
+            df["squeeze_on"] = np.where(df["squeeze_on"] == 1, 0, None)
             sqz_signal = create_scatter(
-                results[activo][temporalidad], "squeeze_on", "SQZ Signal", "blue", hover=True
+                df,
+                "squeeze_on",
+                "SQZ Signal",
+                "blue",
+                hover=True,
             )
-            # sqz_signal.update(
-            #     dict(marker=dict(size=10)),
-            #     overwrite=True
-            # )
-
-            objects3 = [sqzm_bar, adx_line, plus_di, minus_di, sqz_signal]
-
-            fig3 = create_bar_figure(
-                data=results[activo][temporalidad], graph_objects=objects3
+            # Definicion del cruce de DIs
+            df["cross_di_up"] = np.where(
+                (df["plus_di"] > df["minus_di"])
+                & (df["plus_di"].shift(1) < df["minus_di"].shift(1)),
+                1,
+                None,
             )
+            df["cross_di_down"] = np.where(
+                (df["plus_di"] < df["minus_di"])
+                & (df["plus_di"].shift(1) > df["minus_di"].shift(1)),
+                1,
+                None,
+            )
+            cruce_up = add_signals(df["cross_di_up"], "green")
+            cruce_down = add_signals(df["cross_di_down"], "red")
+            objects3 = (
+                [sqzm_bar, adx_line, plus_di, minus_di, sqz_signal]
+                + cruce_up
+                + cruce_down
+            )
+            fig3 = create_bar_figure(data=df, graph_objects=objects3)
             fig3.update_yaxes(autorange=False)
-            
-            
+
             # Subplot
-            last_atr = results[activo][temporalidad]["atr"].iloc[-1]
+            last_atr = df["atr"].iloc[-1]
             plot_name = f"{activo}_{temporalidad} - [ATR] = {last_atr}"
             subplot_fig = make_3r_subplots([fig1, fig2, fig3], title=plot_name)
-            filename = (
-                download_folders[i * len(temporalidades) + j]
-                + f"/{plot_name.split('-')[0].strip()}.html"
+            filename = f"{plot_name.split('-')[0].strip()}.html"
+            download_html(
+                subplot_fig,
+                os.path.join(path, os.path.join(path, filename)),
             )
-            download_html(subplot_fig, filename)
