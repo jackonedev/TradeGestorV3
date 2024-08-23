@@ -1,5 +1,6 @@
 from typing import Dict
 
+import numpy as np
 import pandas as pd
 
 from tools.plots import (
@@ -34,6 +35,7 @@ def load_volume(
             # Download HTML
             if not plots:
                 continue
+    
             # Figure 1
             candlestick = create_candlestick(results[activo][temporalidad])
             upper_band = create_scatter(
@@ -84,6 +86,7 @@ def load_volume(
                 graph_objects=objects1,
                 title=f"{activo} {temporalidad}",
             )
+            fig1.update_yaxes(autorange=False)
 
             # Figure 2
             volume = create_bar(
@@ -95,6 +98,7 @@ def load_volume(
                 graph_objects=objects2,
                 title=f"{activo} {temporalidad}",
             )
+            fig2.update_yaxes(autorange=False)
 
             # Figure 3
             sqzm_bar = create_SQZMOM_bar(results[activo][temporalidad], normalize=True)
@@ -115,12 +119,23 @@ def load_volume(
                 "red",
                 hover=True,
             )
-            objects3 = [sqzm_bar, adx_line, plus_di, minus_di]
+            results[activo][temporalidad]["squeeze_on"] = np.where(results[activo][temporalidad]["squeeze_on"] == 1, 0, None)
+            sqz_signal = create_scatter(
+                results[activo][temporalidad], "squeeze_on", "SQZ Signal", "blue", hover=True
+            )
+            # sqz_signal.update(
+            #     dict(marker=dict(size=10)),
+            #     overwrite=True
+            # )
+
+            objects3 = [sqzm_bar, adx_line, plus_di, minus_di, sqz_signal]
 
             fig3 = create_bar_figure(
                 data=results[activo][temporalidad], graph_objects=objects3
             )
-
+            fig3.update_yaxes(autorange=False)
+            
+            
             # Subplot
             last_atr = results[activo][temporalidad]["atr"].iloc[-1]
             plot_name = f"{activo}_{temporalidad} - [ATR] = {last_atr}"
