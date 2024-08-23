@@ -18,16 +18,15 @@ def settings():
     global activos, temporalidades, download_html_plot, include_volume
     activos = ["BTC", "ENS"]
     temporalidades = []  # empty list = all temporalities
-    temporalidades = ["4h"]  # Auxiliar
     temporalidades = ["1h", "15m", "5m"]
-    temporalidades = ["5m"]
+    temporalidades += ["4h"]  # Auxiliar
     download_html_plot = True
-    include_volume = False
+    include_volume = True
 
 
 def main():
     global activos, temporalidades, download_html_plot, include_volume
-    
+
     # Step 1:
     # Extract data from Exchange
     # Ajuste manual de las ventana de extracción
