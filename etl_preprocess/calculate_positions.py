@@ -83,7 +83,7 @@ def return_positions(
     direction: str = "long",
     operation_volume: float = 100.0,
     market: bool = True,
-    limit: bool = True
+    limit: bool = True,
 ) -> None:
     if direction.lower() not in ["long", "short"]:
         raise ValueError
@@ -120,7 +120,10 @@ def return_positions(
                 elif limit:
                     operations = limit_long_operations
                 sl = min([op[0] for op in operations])
-                rb = ["1:{}".format(round((op[2] - op[1]) / (op[1] - op[0]), 2)) for op in operations]
+                rb = [
+                    "1:{}".format(round((op[2] - op[1]) / (op[1] - op[0]), 2))
+                    for op in operations
+                ]
 
             elif direction == "short":
                 if market and limit:
@@ -130,11 +133,18 @@ def return_positions(
                 elif limit:
                     operations = limit_short_operations
                 sl = max([op[0] for op in operations])
-                rb = ["1:{}".format(round((op[1] - op[2]) / (op[0] - op[1]), 2)) for op in operations]
-            
+                rb = [
+                    "1:{}".format(round((op[1] - op[2]) / (op[0] - op[1]), 2))
+                    for op in operations
+                ]
+
             entry = np.mean([op[1] for op in operations])
-            mean_sl_pct = round(abs(entry - np.mean([op[0] for op in operations])) / entry * 100, 2)
-            mean_tp_pct = round(abs(entry - np.mean([op[2] for op in operations])) / entry * 100, 2)
+            mean_sl_pct = round(
+                abs(entry - np.mean([op[0] for op in operations])) / entry * 100, 2
+            )
+            mean_tp_pct = round(
+                abs(entry - np.mean([op[2] for op in operations])) / entry * 100, 2
+            )
             lev = leverage(entry, sl)
             liq = liq_price(lev, entry, direction)
             vol_unidad = operation_volume_temporalidad / len(operations)
@@ -156,5 +166,5 @@ def return_positions(
                 "vol_trade": operation_volume_temporalidad,
                 "RB": rb,
             }
-    
+
     return positions
