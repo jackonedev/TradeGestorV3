@@ -54,6 +54,12 @@ def create_bar(df, column, name, color, hover=False):
 
 
 def create_SQZMOM_bar(df, normalize=False):
+
+    if normalize:
+        df["SQZMOM_value"] = (df["SQZMOM_value"] - df["SQZMOM_value"].min()) / (
+            df["SQZMOM_value"].max() - df["SQZMOM_value"].min()
+        ) * 100 - 50
+
     colors = []
     for i in range(len(df)):
         if (
@@ -78,10 +84,6 @@ def create_SQZMOM_bar(df, normalize=False):
             colors.append("green")  # Sección 4: Verde claro
         else:
             colors.append("gray")
-    if normalize:
-        df["SQZMOM_value"] = (df["SQZMOM_value"] - df["SQZMOM_value"].min()) / (
-            df["SQZMOM_value"].max() - df["SQZMOM_value"].min()
-        ) * 100 - 50
     return go.Bar(
         x=df.index,
         y=df["SQZMOM_value"],
