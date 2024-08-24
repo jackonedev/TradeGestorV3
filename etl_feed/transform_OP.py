@@ -87,6 +87,9 @@ def transform_OP(
                 if corr > best_corr:
                     best_corr = corr
                     best_params = p.copy()
+            if best_params is None:
+                best_params = sqzm_default_params.copy()
+                print(f"length_KC no pudo optimizarse para {activo} {temporalidad}")
             CORR_DICT[activo][temporalidad] = {
                 "best_corr": best_corr,
                 "best_params": best_params,
