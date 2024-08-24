@@ -19,7 +19,7 @@ df = downloaded_dfs["BTC"]["5m"].copy()
 def return_targets(
     df_asset_dict: Dict[str, Dict[str, pd.DataFrame]],
     live: bool = False,
-) -> Dict[str, Dict[str, Dict[str, Dict[List[Tuple, Tuple, Tuple]]]]]:
+) -> Dict[str, Dict[str, Dict[str, Dict[str, List[Tuple]]]]]:
     """
     E.g.
 
@@ -89,9 +89,16 @@ def return_positions(
         raise ValueError
     direction = direction.lower()
     positions = {}
+    activo_list = list(target_dict.keys())
+    temporalidad_list = list(target_dict[activo_list[0]].keys())
     for activo, temporalidad_dict in targets.items():
         positions[activo] = {}
+        operation_volume_activo = operation_volume / len(activo_list)
         for temporalidad, target_dict in temporalidad_dict.items():
+            operation_volume_temporalidad = operation_volume_activo / len(
+                temporalidad_list
+            )
+
             market_targets = target_dict.get("market")
             limit_targets = target_dict.get("limit")
             market_long = market_targets.get("long")
@@ -128,7 +135,7 @@ def return_positions(
                     sl = min(long_sl)
                     entry = np.mean(long_entry)
                     tp = long_tp
-                    vol_unidad = operation_volume / len(long_entry)
+                    vol_unidad = operation_volume_temporalidad / len(long_entry)
                     # qty_per_entry = [ #TODO
                     #     NotImplemented
                     # ]
@@ -136,28 +143,28 @@ def return_positions(
                     sl = min(market_long_sl)
                     entry = np.mean(market_long_entry)
                     tp = market_long_tp
-                    vol_unidad = operation_volume / len(market_long_entry)
+                    vol_unidad = operation_volume_temporalidad / len(market_long_entry)
                 elif limit:
                     sl = min(limit_long_sl)
                     entry = np.mean(limit_long_entry)
                     tp = limit_long_tp
-                    vol_unidad = operation_volume / len(limit_long_entry)
+                    vol_unidad = operation_volume_temporalidad / len(limit_long_entry)
             elif direction == "short":
                 if market and limit:
                     sl = min(short_sl)
                     entry = np.mean(short_entry)
                     tp = short_tp
-                    vol_unidad = operation_volume / len(short_entry)
+                    vol_unidad = operation_volume_temporalidad / len(short_entry)
                 elif market:
                     sl = min(market_short_sl)
                     entry = np.mean(market_short_entry)
                     tp = market_short_tp
-                    vol_unidad = operation_volume / len(market_short_entry)
+                    vol_unidad = operation_volume_temporalidad / len(market_short_entry)
                 elif limit:
                     sl = min(limit_short_sl)
                     entry = np.mean(limit_short_entry)
                     tp = limit_short_tp
-                    vol_unidad = operation_volume / len(limit_short_entry)
+                    vol_unidad = operation_volume_temporalidad / len(limit_short_entry)
 
             porcentaje_sl = round(abs(entry - sl) / entry * 100, 2)
             apal_x, precio_liq = apalancamiento(entry, sl, direction)  # TODO
