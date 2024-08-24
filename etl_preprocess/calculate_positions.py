@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
-from tools.business import calculate_targets
+from tools.business import calculate_targets, leverage, liq_price, split_targets
 from utils.utils import (
     obtain_most_recent_download_directory_paths,
     obtain_most_recent_downloaded_datasets,
@@ -83,17 +83,18 @@ def return_positions(
     direction: str = "long",
     operation_volume: float = 100.0,
     market: bool = True,
-    limit: bool = True,
+    limit: bool = True
 ) -> None:
     if direction.lower() not in ["long", "short"]:
         raise ValueError
     direction = direction.lower()
     positions = {}
-    activo_list = list(target_dict.keys())
-    temporalidad_list = list(target_dict[activo_list[0]].keys())
+    activo_list = list(targets.keys())
+    temporalidad_list = list(targets[activo_list[0]].keys())
     for activo, temporalidad_dict in targets.items():
         positions[activo] = {}
         operation_volume_activo = operation_volume / len(activo_list)
+        qty_precision: int = 5  # TODO: descargar contratos
         for temporalidad, target_dict in temporalidad_dict.items():
             operation_volume_temporalidad = operation_volume_activo / len(
                 temporalidad_list
@@ -106,79 +107,54 @@ def return_positions(
             limit_long = limit_targets.get("long")
             limit_short = limit_targets.get("short")
 
-            market_long_sl: tuple = market_long[0]
-            market_long_entry: tuple = market_long[1]
-            market_long_tp: tuple = market_long[2]
-
-            market_short_sl: tuple = market_short[0]
-            market_short_entry: tuple = market_short[1]
-            market_short_tp: tuple = market_short[2]
-
-            limit_long_sl: tuple = limit_long[0]
-            limit_long_entry: tuple = limit_long[1]
-            limit_long_tp: tuple = limit_long[2]
-
-            limit_short_sl: tuple = limit_short[0]
-            limit_short_entry: tuple = limit_short[1]
-            limit_short_tp: tuple = limit_short[2]
-
-            long_sl = market_long_sl + limit_long_sl
-            long_entry = market_long_entry + limit_long_entry
-            long_tp = market_long_tp + limit_long_tp
-
-            short_sl = market_short_sl + limit_short_sl
-            short_entry = market_short_entry + limit_short_entry
-            short_tp = market_short_tp + limit_short_tp
+            market_long_operations = split_targets(market_long)
+            market_short_operations = split_targets(market_short)
+            limit_long_operations = split_targets(limit_long)
+            limit_short_operations = split_targets(limit_short)
 
             if direction == "long":
                 if market and limit:
-                    sl = min(long_sl)
-                    entry = np.mean(long_entry)
-                    tp = long_tp
-                    vol_unidad = operation_volume_temporalidad / len(long_entry)
-                    # qty_per_entry = [ #TODO
-                    #     NotImplemented
-                    # ]
+                    operations = market_long_operations + limit_long_operations
                 elif market:
-                    sl = min(market_long_sl)
-                    entry = np.mean(market_long_entry)
-                    tp = market_long_tp
-                    vol_unidad = operation_volume_temporalidad / len(market_long_entry)
+                    operations = market_long_operations
                 elif limit:
-                    sl = min(limit_long_sl)
-                    entry = np.mean(limit_long_entry)
-                    tp = limit_long_tp
-                    vol_unidad = operation_volume_temporalidad / len(limit_long_entry)
+                    operations = limit_long_operations
+                sl = min([op[0] for op in operations])
+                rb = ["1:{}".format(round((op[2] - op[1]) / (op[1] - op[0]), 2)) for op in operations]
+
             elif direction == "short":
                 if market and limit:
-                    sl = min(short_sl)
-                    entry = np.mean(short_entry)
-                    tp = short_tp
-                    vol_unidad = operation_volume_temporalidad / len(short_entry)
+                    operations = market_short_operations + limit_short_operations
                 elif market:
-                    sl = min(market_short_sl)
-                    entry = np.mean(market_short_entry)
-                    tp = market_short_tp
-                    vol_unidad = operation_volume_temporalidad / len(market_short_entry)
+                    operations = market_short_operations
                 elif limit:
-                    sl = min(limit_short_sl)
-                    entry = np.mean(limit_short_entry)
-                    tp = limit_short_tp
-                    vol_unidad = operation_volume_temporalidad / len(limit_short_entry)
-
-            porcentaje_sl = round(abs(entry - sl) / entry * 100, 2)
-            apal_x, precio_liq = apalancamiento(entry, sl, direction)  # TODO
-            # Consideramos que cada entrada posee el mismo peso dentro del trade
-            # qty_entradas = ...
-            """
-            El PROBLEMA:
-            `qty_per_entry` (conocida como `qty_entradas`) se encarga de dividir el volumen por unidad (entrada) por la diferencia entre entry y sl
-            La entry en type "market" tiene dos sl, y el type "limit" tiene dos entry, cada uno con su propio sl.
+                    operations = limit_short_operations
+                sl = max([op[0] for op in operations])
+                rb = ["1:{}".format(round((op[1] - op[2]) / (op[0] - op[1]), 2)) for op in operations]
             
-            
-            El otro PROBLEMA:            
-            EL VOLUMEN POR UNIDAD DEBE CONSIDERAR DIVIR EL VOLUMEN DE OPERACION DEBE ENTRE LAS N ENTRADAS, LAS TEMPORALIDADES, Y LA CANTIDAD DE ACTIVOS
-            """
+            entry = np.mean([op[1] for op in operations])
+            mean_sl_pct = round(abs(entry - np.mean([op[0] for op in operations])) / entry * 100, 2)
+            mean_tp_pct = round(abs(entry - np.mean([op[2] for op in operations])) / entry * 100, 2)
+            lev = leverage(entry, sl)
+            liq = liq_price(lev, entry, direction)
+            vol_unidad = operation_volume_temporalidad / len(operations)
+            qty_per_entry = [
+                round(vol_unidad / abs(x[0] - x[1]), qty_precision) for x in operations
+            ]
+            operations_dict = {
+                f"operation_{i+1}": list(op) for i, op in enumerate(operations)
+            }
 
-            # TODO: Descargar contratos de futuros:
-            # if direccion_trade == 'LONG' and apal_x > max_leverage_l: f'El apalancamiento máximo para este par es de {max_leverage_l}'
+            positions[activo][temporalidad] = {
+                "operations": operations_dict,
+                "mean_stoploss_pct": mean_sl_pct,
+                "mean_takeprofit_pct": mean_tp_pct,
+                "lev": lev,
+                "liq": liq,
+                "qty_per_entry": qty_per_entry,
+                "vol_per_entry": vol_unidad,
+                "vol_trade": operation_volume_temporalidad,
+                "RB": rb,
+            }
+    
+    return positions
