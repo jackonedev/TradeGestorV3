@@ -1,8 +1,8 @@
 from schemas.targets import TargetResults
 
 
-def calculate_targets(df, real_price=None):
-    results = TargetResults.calculate(df, real_price)
+def calculate_targets(df, real_price=None, precision=2):
+    results = TargetResults.calculate(df, real_price, precision)
     return results.dict()
 
 
@@ -39,33 +39,3 @@ def liq_price(lev, entry, direction):
     elif direction == "short":
         liq = entry + distance
     return liq
-
-
-def adjust_positions_by_minimum_leverage(positions_list):
-    min_lev = min(pos["lev"] for pos in positions_list)
-    min_liq = min(pos["liq"] for pos in positions_list)
-
-    positions_adj = []
-    for pos in positions_list:
-        lev_actual = pos["lev"]
-
-        if lev_actual == min_lev:
-            positions_adj.append(pos)
-            continue
-
-        adj_factor = lev_actual / min_lev
-
-        qty_per_entry_ajustada = [qty * adj_factor for qty in pos["qty_per_entry"]]
-        vol_per_entry_ajustada = pos["vol_per_entry"] * adj_factor
-        vol_trade = pos["vol_trade"] * adj_factor
-
-        pos_adj = pos.copy()
-        pos_adj["lev"] = min_lev
-        pos_adj["liq"] = min_liq
-        pos_adj["qty_per_entry"] = qty_per_entry_ajustada
-        pos_adj["vol_per_entry"] = vol_per_entry_ajustada
-        pos_adj["vol_trade"] = vol_trade
-
-        positions_adj.append(pos_adj)
-
-    return positions_adj
