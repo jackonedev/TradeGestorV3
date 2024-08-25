@@ -166,3 +166,4 @@ cython_debug/
 *_ignore_*
 datasets/*
 colab_*
+tg/contracts/*
