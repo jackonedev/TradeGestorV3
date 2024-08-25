@@ -16,10 +16,12 @@ def settings():
     Configuración inicial
     """
     global activos, temporalidades, download_html_plot, include_volume
-    activos = ["BTC", "ENS"]
+    activos = ["BTC"]  # , "ENS"]
     temporalidades = []  # empty list = all temporalities
-    temporalidades = ["1h", "15m", "5m"]
-    temporalidades += ["4h"]  # Auxiliar
+    # temporalidades = ["15m", "5m"]
+    # temporalidades += ["1h"]
+    temporalidades = ["1w"]
+    # temporalidades += ["4h"]
     download_html_plot = True
     include_volume = True
 
