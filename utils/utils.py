@@ -64,5 +64,7 @@ def obtain_most_recent_downloaded_datasets():
     for k, v in datasets_path_dict.items():
         datasets_df_dict[k] = {}
         for kk, vv in v.items():
-            datasets_df_dict[k][kk] = pd.read_parquet(f"{vv}/data.parquet")
+            if os.path.isdir(vv):
+                datasets_df_dict[k][kk] = pd.read_parquet(f"{vv}/data.parquet")
+
     return datasets_df_dict

@@ -11,5 +11,10 @@ KLINES_LIMIT = 555
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATASETS_PATH = os.path.join(PROJECT_ROOT, "datasets")
 
-if not os.path.exists(os.path.join(PROJECT_ROOT, "datasets")):
-    os.makedirs(os.path.join(PROJECT_ROOT, "datasets"))
+if not os.path.exists(DATASETS_PATH):
+    os.makedirs(DATASETS_PATH)
+
+TRADE_GESTOR_PATH = os.path.join(PROJECT_ROOT, "tg")
+CONTRACTS_PATH = os.path.join(TRADE_GESTOR_PATH, "contracts")
+if not os.path.exists(CONTRACTS_PATH):
+    os.makedirs(CONTRACTS_PATH)
