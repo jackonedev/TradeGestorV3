@@ -1,4 +1,5 @@
 from typing import Dict, List, Optional, Tuple
+
 from pydantic import BaseModel
 
 
@@ -9,7 +10,7 @@ class TradeParams(BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        self.market_spread = self.market_spread or 0.01 * self.atr
+        self.market_spread = self.market_spread or 0.02 * self.atr
 
 
 class TargetResults(BaseModel):
@@ -34,7 +35,9 @@ class TargetResults(BaseModel):
         )
 
     @staticmethod
-    def _calculate_market_long(params: TradeParams, precision: int) -> List[Tuple[float, ...]]:
+    def _calculate_market_long(
+        params: TradeParams, precision: int
+    ) -> List[Tuple[float, ...]]:
         return [
             (round(params.real_price - 0.9 * params.atr, precision),),  # Stop-loss
             (round(params.real_price - params.market_spread, precision),),  # Entry
@@ -45,7 +48,9 @@ class TargetResults(BaseModel):
         ]
 
     @staticmethod
-    def _calculate_market_short(params: TradeParams, precision: int) -> List[Tuple[float, ...]]:
+    def _calculate_market_short(
+        params: TradeParams, precision: int
+    ) -> List[Tuple[float, ...]]:
         return [
             (round(params.real_price + 0.9 * params.atr, precision),),  # Stop-loss
             (round(params.real_price + params.market_spread, precision),),  # Entry
@@ -56,7 +61,9 @@ class TargetResults(BaseModel):
         ]
 
     @staticmethod
-    def _calculate_limit_long(params: TradeParams, precision: int) -> List[Tuple[float, ...]]:
+    def _calculate_limit_long(
+        params: TradeParams, precision: int
+    ) -> List[Tuple[float, ...]]:
         entry_1 = params.real_price - 0.25 * params.atr
         entry_2 = params.real_price - params.atr
         return [
@@ -79,7 +86,9 @@ class TargetResults(BaseModel):
         ]
 
     @staticmethod
-    def _calculate_limit_short(params: TradeParams, precision: int) -> List[Tuple[float, ...]]:
+    def _calculate_limit_short(
+        params: TradeParams, precision: int
+    ) -> List[Tuple[float, ...]]:
         entry_1 = params.real_price + 0.25 * params.atr
         entry_2 = params.real_price + params.atr
         return [
