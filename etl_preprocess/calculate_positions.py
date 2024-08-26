@@ -164,6 +164,9 @@ def return_positions(
             }
 
             positions[activo][temporalidad] = {
+                "asset": activo,
+                "temporality": temporalidad,
+                "direction": direction,
                 "operations": operations_dict,
                 "mean_stoploss_pct": mean_sl_pct,
                 "mean_takeprofit_pct": mean_tp_pct,
