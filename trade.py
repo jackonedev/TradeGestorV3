@@ -1,6 +1,9 @@
 import json
 import os
 from functools import partial
+import time
+from itertools import count
+import datetime as dt
 
 from etl_preprocess.calculate_positions import (
     adjust_positions_leverage,
@@ -23,10 +26,12 @@ from utils.utils import (
 )
 
 
+# TEST = False
+
 def account_settings():
     global acc_vol, risk_pct, op_vol
     acc_vol = get_account_balance()
-    risk_pct = 0.1
+    risk_pct = 0.01
     op_vol = acc_vol * risk_pct
 
 
@@ -66,6 +71,15 @@ if __name__ == "__main__":
     downloaded_dfs = obtain_most_recent_downloaded_datasets()
 
     targets = return_targets(downloaded_dfs, live)
+    n_assets = len(targets)
+    n_temporlaties = len(targets[list(targets.keys())[0]])
+    if market and limit:
+        op_vol *= 8
+    elif market:
+        op_vol *= 2
+    elif limit:
+        op_vol *= 6
+    op_vol *= n_assets * n_temporlaties
     positions = return_positions(targets, direction, op_vol, market, limit, live)
     adj_positions = adjust_positions_leverage(positions, direction, live)
 
@@ -160,7 +174,7 @@ if __name__ == "__main__":
                         ),
                     }
 
-                    partial_calls.append(partial(post_order, **orden))
+                partial_calls.append(partial(post_order, **orden))
 
                 take_profit = {
                     "symbol": symbol,
@@ -178,19 +192,38 @@ if __name__ == "__main__":
         # .7. Enviar Batch
         # .8. Almacenar batch en datasets/
         try:
-            # res = place_batch(orden_batches)
-            res_list = many_partial_threads(partial_calls)
-            for i, res in enumerate(res_list):
-                with open(f"{ASSET_PATH}/response_{i+1}.json", "w") as f:
-                    f.write(json.dumps(res, indent=2))
+            batch_size = 4
+            counter = count(1)
+            for i in range(0, len(partial_calls), batch_size):
+                batch = partial_calls[i:i + batch_size]
+                res_list = many_partial_threads(batch)
+                c = next(counter)
+                for res in res_list:
+                    with open(f"{ASSET_PATH}/{asset}_request_{c}.txt", "w") as f:
+                        f.write(orden[i])
+                    with open(f"{ASSET_PATH}/{asset}_response_{c}.json", "w") as f:
+                        f.write(json.dumps(res, indent=2))
+                        # f.write(json.dumps(orden[i], indent=2))
+                time.sleep(0.2)
+        
+            # # res = place_batch(orden_batches)
+            # res_list = many_partial_threads(partial_calls)
+            # for i, res in enumerate(res_list):
+            #     with open(f"{ASSET_PATH}/{asset}_response_{i+1}.json", "w") as f:
+            #         f.write(json.dumps(res, indent=2))
+            #     with open(f"{ASSET_PATH}/{asset}_request_{i+1}.json", "w") as f:
+            #         f.write(json.dumps(orden[i], indent=2))
+            # # place_batch(takeprofit_batches)
+            # print(f"Batch enviado: {res}")
 
-            # place_batch(takeprofit_batches)
-            print(f"Batch enviado: {res}")
         except Exception as e:
             print(f"Error al enviar el batch: {e}")
             with open(f"{ASSET_PATH}/error.txt", "w") as f:
                 f.write(str(e))
         finally:
+            with open(f"{ASSET_PATH}/acc_init_balance.txt", "w") as f:
+                date = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                f.write(f"Fecha: {date}\n Balance Cta: {acc_vol}")
             with open(f"{ASSET_PATH}/trailing.json", "w") as f:
                 f.write(json.dumps(trailing_batches, indent=2))
             with open(f"{ASSET_PATH}/orders.json", "w") as f:
