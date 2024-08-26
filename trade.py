@@ -12,7 +12,8 @@ from tg.trade_gestor_v1 import (
     cargar_contrato,
     get_account_balance,
 )
-from tg.trade_gestor_v2 import get_current_orders, switch_leverage, post_order
+from tg.trade_gestor_v2 import get_current_orders, post_order, switch_leverage
+
 # from tg.trade_gestor_v3 import place_batch
 from tools.optimizer import many_partial_threads
 from utils.config import CONTRACTS_PATH
@@ -67,29 +68,6 @@ if __name__ == "__main__":
     targets = return_targets(downloaded_dfs, live)
     positions = return_positions(targets, direction, op_vol, market, limit, live)
     adj_positions = adjust_positions_leverage(positions, direction, live)
-
-    # Creación del batch de órdenes
-    for asset, orders_list in adj_positions.items():
-        _asset_settings(asset)
-        # .1. Ajustar apalancamiento para el par
-
-        current_orders = get_current_orders(symbol)
-        existing_orders = current_orders.get("data", {}).get("orders", [])
-        if len(existing_orders) > 0:
-            for ord in existing_orders:
-                if ord.get("symbol") == symbol:
-                    print("Existen posiciones previas, se cancela la ejecución")
-                    raise Exception("Existen posiciones previas")
-
-        lev = orders_list[0].get("lev")
-        lev_res = switch_leverage(symbol, direction.upper(), lev)
-        assert (
-            lev_res.get("code") == 0
-        ), f"Error al ajustar el apalancamiento: {lev_res}"
-
-        # # .2. Verificar volumen mínimo permitido y margen disponible
-        # vol_per_trade = orders_list[0].get("vol_per_entry")
-        # #TODO: check min volume allowed
 
     for asset, orders_list in adj_positions.items():
         _asset_settings(asset)
@@ -181,7 +159,7 @@ if __name__ == "__main__":
                             }
                         ),
                     }
-                    
+
                     partial_calls.append(partial(post_order, **orden))
 
                 take_profit = {
@@ -205,7 +183,7 @@ if __name__ == "__main__":
             for i, res in enumerate(res_list):
                 with open(f"{ASSET_PATH}/response_{i+1}.json", "w") as f:
                     f.write(json.dumps(res, indent=2))
-                
+
             # place_batch(takeprofit_batches)
             print(f"Batch enviado: {res}")
         except Exception as e:
