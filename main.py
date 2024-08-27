@@ -6,6 +6,8 @@ from etl_feed.load import load
 from etl_feed.load_volume import load_volume
 from etl_feed.transform import transform
 from etl_feed.transform_OP import transform_OP
+from etl_preprocess.reload_plots import reload_plots
+from etl_preprocess.sqzm_optimization_process import optimize_sqzm_parameters
 from schemas.temporality import TempMappingModel
 from tools.dates import past_timestamp
 
@@ -15,15 +17,15 @@ def settings():
     """
     Configuración inicial
     """
-    global activos, temporalidades, download_html_plot, include_volume
-    activos = ["BTC"]  # , "ENS"]
+    global activos, temporalidades, download_html_plot, include_volume, OPTIMIZE_SQZM, REPLOT
+    activos = ["DOGE", "BTC", "ENS"]
     temporalidades = []  # empty list = all temporalities
-    # temporalidades = ["15m", "5m"]
-    # temporalidades += ["1h"]
-    temporalidades = ["1w"]
-    # temporalidades += ["4h"]
+    temporalidades = ["1h", "15m", "5m"]
+    temporalidades += ["4h"]
     download_html_plot = True
     include_volume = True
+    OPTIMIZE_SQZM = True
+    REPLOT = True
 
 
 def main():
@@ -66,3 +68,13 @@ if __name__ == "__main__":
     settings()
     main()
     print("ETL completado")
+
+    if OPTIMIZE_SQZM:
+        print("Iniciando optimización de parámetros")
+        optimize_sqzm_parameters()
+        print("Optimización de parámetros completada")
+
+    if REPLOT:
+        print("Recargando gráficos")
+        reload_plots()
+        print("Recarga de gráficos completada")
