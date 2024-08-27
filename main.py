@@ -10,6 +10,7 @@ from etl_preprocess.reload_plots import reload_plots
 from etl_preprocess.sqzm_optimization_process import optimize_sqzm_parameters
 from schemas.temporality import TempMappingModel
 from tools.dates import past_timestamp
+from utils.utils import obtain_most_recent_download_directory_paths
 
 
 ### ~  VARIABLES INICIALES  ~###
@@ -74,7 +75,8 @@ if __name__ == "__main__":
         optimize_sqzm_parameters()
         print("Optimización de parámetros completada")
 
-    if REPLOT:
-        print("Recargando gráficos")
-        reload_plots()
-        print("Recarga de gráficos completada")
+        if REPLOT:
+            print("Recargando gráficos")
+            download_paths = obtain_most_recent_download_directory_paths()
+            reload_plots()
+            print("Recarga de gráficos completada")
