@@ -10,12 +10,12 @@ from utils.utils import (
     obtain_most_recent_downloaded_datasets,
 )
 
-## INITIAL VARIABLES ##
-download_paths = obtain_most_recent_download_directory_paths()
-downloaded_dfs = obtain_most_recent_downloaded_datasets()
-
 
 def optimize_sqzm_parameters():
+    ## INITIAL VARIABLES ##
+    download_paths = obtain_most_recent_download_directory_paths()
+    downloaded_dfs = obtain_most_recent_downloaded_datasets()
+
     ## OPTIMIZING SQUEEZE MOMENTUM INDICATOR PARAMETERS ##
     PARAMETROS_ORIGINALES = dict(
         length=20, mult=1.5, length_KC=20, mult_KC=1, n_atr=10, use_EMA=True
