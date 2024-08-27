@@ -1,7 +1,6 @@
 import json
 from functools import partial
 from itertools import count, product
-from random import randint
 
 import numpy as np
 
@@ -79,5 +78,5 @@ for activo, temporalidad_dict in DATASETS_PARTIAL_DICT.items():
 for activo, temporalidad_dict in CORR_DICT.items():
     for temporalidad, corr_dict in temporalidad_dict.items():
         dir_path = download_paths[activo][temporalidad]
-        with open(f"{dir_path}/sqzmom_params_{randint(100,999)}.json", "w") as f:
+        with open(f"{dir_path}/sqzmom_best_params.json", "w") as f:
             json.dump(corr_dict, f)

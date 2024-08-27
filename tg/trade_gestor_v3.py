@@ -41,7 +41,7 @@ def send_request(method, path, urlpa, payload):
         "X-BX-APIKEY": APIKEY,
     }
     response = requests.request(method, url, headers=headers, data=payload)
-    return response.text
+    return response.json()
 
 
 def parseParam(paramsMap):
@@ -51,3 +51,16 @@ def parseParam(paramsMap):
         return paramsStr + "&timestamp=" + str(int(time.time() * 1000))
     else:
         return paramsStr + "timestamp=" + str(int(time.time() * 1000))
+
+
+def get_orders(symbol: str, order_id: str = None):
+    payload = {}
+    path = "/openApi/swap/v2/trade/openOrders"
+    method = "GET"
+    paramsMap = {
+        "symbol": symbol,
+    }
+    if order_id:
+        paramsMap["orderId"] = order_id
+    paramsStr = parseParam(paramsMap)
+    return send_request(method, path, paramsStr, payload)

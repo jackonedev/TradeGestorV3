@@ -1,9 +1,9 @@
+import datetime as dt
 import json
 import os
-from functools import partial
 import time
+from functools import partial
 from itertools import count
-import datetime as dt
 
 from etl_preprocess.calculate_positions import (
     adjust_positions_leverage,
@@ -16,8 +16,7 @@ from tg.trade_gestor_v1 import (
     get_account_balance,
 )
 from tg.trade_gestor_v2 import get_current_orders, post_order, switch_leverage
-
-# from tg.trade_gestor_v3 import place_batch
+from tg.trade_gestor_v3 import get_orders
 from tools.optimizer import many_partial_threads
 from utils.config import CONTRACTS_PATH
 from utils.utils import (
@@ -25,8 +24,6 @@ from utils.utils import (
     obtain_most_recent_downloaded_datasets,
 )
 
-
-# TEST = False
 
 def account_settings():
     global acc_vol, risk_pct, op_vol
@@ -37,7 +34,7 @@ def account_settings():
 
 def trade_settings():
     global direction, currency, live, market, limit
-    direction = "short"
+    direction = "long"
     currency = "USDT"
     live = True
     market = True
@@ -51,15 +48,10 @@ def check_for_contracts():
 
 
 def _asset_settings(asset):
-    global par, currency, symbol, qty_precision, price_precision, max_leverage_l, max_leverage_s
+    global par, currency, symbol
     contract = cargar_contrato(f"{asset}-{currency}")
     assert contract, f"No se encontró el contrato para {asset}"
-    par = contract["asset"]
     symbol = contract["symbol"]
-    qty_precision = contract["quantityPrecision"]
-    price_precision = contract["pricePrecision"]
-    max_leverage_l = int(contract["maxLongLeverage"])
-    max_leverage_s = int(contract["maxShortLeverage"])
 
 
 if __name__ == "__main__":
@@ -90,13 +82,10 @@ if __name__ == "__main__":
         ASSET_PATH = asset_path.get(temp).rsplit("/", 1)[0]
 
         # .1. Ajustar apalancamiento para el par
-        current_orders = get_current_orders(symbol)
+        current_orders = get_orders(symbol)
         existing_orders = current_orders.get("data", {}).get("orders", [])
-        if len(existing_orders) > 0:
-            for ord in existing_orders:
-                if ord.get("symbol") == symbol:
-                    print("Existen posiciones previas, se cancela la ejecución")
-                    raise Exception("Existen posiciones previas")
+        if direction.upper() in [r["positionSide"] for r in existing_orders]:
+            raise ValueError("Ya existen ordenes en el sentido indicado")
 
         lev = orders_list[0].get("lev")
         lev_res = switch_leverage(symbol, direction.upper(), lev)
@@ -195,26 +184,15 @@ if __name__ == "__main__":
             batch_size = 4
             counter = count(1)
             for i in range(0, len(partial_calls), batch_size):
-                batch = partial_calls[i:i + batch_size]
+                batch = partial_calls[i : i + batch_size]
                 res_list = many_partial_threads(batch)
-                c = next(counter)
-                for res in res_list:
-                    with open(f"{ASSET_PATH}/{asset}_request_{c}.txt", "w") as f:
-                        f.write(orden[i])
+                for j, res in enumerate(res_list):
+                    c = next(counter)
+                    with open(f"{ASSET_PATH}/{asset}_request_{c}.json", "w") as f:
+                        f.write(json.dumps(orden_batches[j], indent=2))
                     with open(f"{ASSET_PATH}/{asset}_response_{c}.json", "w") as f:
                         f.write(json.dumps(res, indent=2))
-                        # f.write(json.dumps(orden[i], indent=2))
                 time.sleep(0.2)
-        
-            # # res = place_batch(orden_batches)
-            # res_list = many_partial_threads(partial_calls)
-            # for i, res in enumerate(res_list):
-            #     with open(f"{ASSET_PATH}/{asset}_response_{i+1}.json", "w") as f:
-            #         f.write(json.dumps(res, indent=2))
-            #     with open(f"{ASSET_PATH}/{asset}_request_{i+1}.json", "w") as f:
-            #         f.write(json.dumps(orden[i], indent=2))
-            # # place_batch(takeprofit_batches)
-            # print(f"Batch enviado: {res}")
 
         except Exception as e:
             print(f"Error al enviar el batch: {e}")

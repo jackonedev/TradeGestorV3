@@ -206,6 +206,12 @@ def adjust_positions_leverage(
         elif direction == "short":
             max_leverage = max_leverage_s
 
+        if max_leverage == 0:
+            print("\nWARNING: The maximum leverage is 0. Setting default value of 20.")
+            if input("Do you want to continue? (y/n): ").lower() != "y":
+                raise ValueError("Operation canceled by user.")
+            max_leverage = 20  # TODO: Caso BNB -> apalancamiento 0
+
         min_lev = min(pos["lev"] for pos in operations)
         min_liq = min(pos["liq"] for pos in operations)
 
