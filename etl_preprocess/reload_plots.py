@@ -8,10 +8,6 @@ from utils.utils import (
     obtain_most_recent_downloaded_datasets,
 )
 
-## INITIAL VARIABLES ##
-download_paths = obtain_most_recent_download_directory_paths()
-downloaded_dfs = obtain_most_recent_downloaded_datasets()
-
 
 def reload_plots():
     """
@@ -19,6 +15,7 @@ def reload_plots():
     utilizando parámetros óptimos para el indicador Squeeze Momentum.
     """
 
+    ## INITIAL VARIABLES ##
     download_paths = obtain_most_recent_download_directory_paths()
     downloaded_dfs = obtain_most_recent_downloaded_datasets()
 
@@ -26,6 +23,7 @@ def reload_plots():
         for temporalidad, path in temporalidad_dict.items():
 
             df = downloaded_dfs[activo][temporalidad]
+            print(os.listdir(path))
             best_params_file = [f for f in os.listdir(path) if "best_params" in f][0]
             with open(os.path.join(path, best_params_file)) as f:
                 best_params = json.load(f)
