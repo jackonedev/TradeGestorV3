@@ -23,7 +23,6 @@ def reload_plots():
         for temporalidad, path in temporalidad_dict.items():
 
             df = downloaded_dfs[activo][temporalidad]
-            print(os.listdir(path))
             best_params_file = [f for f in os.listdir(path) if "best_params" in f][0]
             with open(os.path.join(path, best_params_file)) as f:
                 best_params = json.load(f)
