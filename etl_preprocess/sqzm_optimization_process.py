@@ -1,8 +1,7 @@
 import json
 from functools import partial
 from itertools import count, product
-
-import numpy as np
+from random import randint
 
 from tools.optimizer import many_partial_processes
 from tools.technical_indicators import squeeze_momentum_indicator
@@ -17,66 +16,91 @@ downloaded_dfs = obtain_most_recent_downloaded_datasets()
 
 
 ## OPTIMIZING SQUEEZE MOMENTUM INDICATOR PARAMETERS ##
-DATASETS_PARTIAL_DICT = {}
-PARTIAL_CALL_LIST = []
 PARAMETROS_ORIGINALES = dict(
-    length=20, mult=2, length_KC=20, mult_KC=1.5, n_atr=10, use_EMA=True
+    length=20, mult=1.5, length_KC=20, mult_KC=1, n_atr=10, use_EMA=True
 )
-length_BBs = [12, 14, 18, 20, 22]
-mult_range = np.arange(1.5, 2.6, 0.25)
-length_KCs = [12, 14, 18, 20, 22]
-mult_KC_range = np.arange(1, 2.1, 0.25)
+length_BBs = [8, 12, 14, 18, 20, 22, 26]
+mult_range = [1.5]
+length_KCs = [8, 12, 14, 18, 20, 22, 26]
+mult_KC_range = [1]
 param_combinations = list(product(length_BBs, mult_range, length_KCs, mult_KC_range))
 
+
 ## APPLY SQUEEZE MOMENTUM INDICATOR ##
+DATASETS_PARTIAL_DICT = {}
+DATASETS_PARAM_DICT = {}
 for activo, temporalidad_dict in downloaded_dfs.items():
     DATASETS_PARTIAL_DICT[activo] = {}
+    DATASETS_PARAM_DICT[activo] = {}
     for temporalidad, df in temporalidad_dict.items():
-        DATASETS_PARTIAL_DICT[activo][temporalidad] = {}
         c = count()
+        PARTIAL_LIST = []
+        PARAM_LIST = []
         for x in param_combinations:
             p = PARAMETROS_ORIGINALES.copy()
             p.update(dict(zip(["length", "mult", "length_KC", "mult_KC"], x)))
-            DATASETS_PARTIAL_DICT[activo][temporalidad][next(c)] = None
-            PARTIAL_CALL_LIST.append(partial(squeeze_momentum_indicator, df, **p))
+            PARTIAL_LIST.append(partial(squeeze_momentum_indicator, df, **p))
+            PARAM_LIST.append(p.copy())
+        DATASETS_PARTIAL_DICT[activo][temporalidad] = PARTIAL_LIST.copy()
+        DATASETS_PARAM_DICT[activo][temporalidad] = PARAM_LIST.copy()
 # Ejecutar optimización
-results = many_partial_processes(PARTIAL_CALL_LIST)
-# Actualizar diccionario
-c = count()
+RESULT_DICT = {}
 for activo, temporalidad_dict in DATASETS_PARTIAL_DICT.items():
-    for temporalidad, df in temporalidad_dict.items():
-        for i in range(len(param_combinations)):
-            DATASETS_PARTIAL_DICT[activo][temporalidad][i] = results[next(c)]
+    RESULT_DICT[activo] = {}
+    for temporalidad, partial_list in temporalidad_dict.items():
+        RESULT_DICT[activo][temporalidad] = {}
+        results = many_partial_processes(partial_list)
+        RESULT_LIST = []
+        for i, result in enumerate(results):
+            RESULT_LIST.append(
+                (DATASETS_PARAM_DICT[activo][temporalidad][i], result.copy())
+            )
+        RESULT_DICT[activo][temporalidad] = RESULT_LIST.copy()
+
 
 ## OBTENER CORRELACION Y MEJORES PARAMETROS ##
+BEST_CORR_DICT = {}
 CORR_DICT = {}
-for activo, temporalidad_dict in DATASETS_PARTIAL_DICT.items():
+for activo, temporalidad_dict in RESULT_DICT.items():
+    BEST_CORR_DICT[activo] = {}
     CORR_DICT[activo] = {}
-    best_corr = 0
-    best_params = None
-    for temporalidad, asset_dict in temporalidad_dict.items():
-        for i in range(len(param_combinations)):
+    for temporalidad, results_list in temporalidad_dict.items():
+        best_corr = 0
+        best_params = None
+        CORR_LIST = []
+        for params, df in results_list:
             p = PARAMETROS_ORIGINALES.copy()
             p.update(
                 dict(
                     zip(
                         ["length", "mult", "length_KC", "mult_KC"],
-                        param_combinations[i],
+                        params.values(),
                     )
                 )
             )
-            corr = asset_dict[i]["close"].corr(asset_dict[i]["SQZMOM_value"])
+            corr = df["close"].corr(df["SQZMOM_value"])
+            CORR_LIST.append({"corr": corr, "params": p})
             if corr > best_corr:
                 best_corr = corr
                 best_params = p.copy()
-        CORR_DICT[activo][temporalidad] = {
+
+        CORR_DICT[activo][temporalidad] = CORR_LIST
+        BEST_CORR_DICT[activo][temporalidad] = {
             "best_corr": best_corr,
             "best_params": best_params,
         }
 
+
 ## GUARDAR RESULTADOS ##
-for activo, temporalidad_dict in CORR_DICT.items():
+for activo, temporalidad_dict in BEST_CORR_DICT.items():
     for temporalidad, corr_dict in temporalidad_dict.items():
         dir_path = download_paths[activo][temporalidad]
-        with open(f"{dir_path}/sqzmom_best_params.json", "w") as f:
+        rand = randint(100, 999)
+        with open(
+            f"{dir_path}/{activo}_{temporalidad}_sqzmom_best_params_{rand}.json", "w"
+        ) as f:
             json.dump(corr_dict, f)
+        with open(
+            f"{dir_path}/{activo}_{temporalidad}_sqzmom_params_{rand}.json", "w"
+        ) as f:
+            json.dump(json.dumps(CORR_DICT[activo][temporalidad], indent=2), f)
