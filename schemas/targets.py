@@ -10,7 +10,7 @@ class TradeParams(BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        self.market_spread = self.market_spread or 0.02 * self.atr
+        self.market_spread = self.market_spread or 0.09 * self.atr
 
 
 class TargetResults(BaseModel):
@@ -38,12 +38,16 @@ class TargetResults(BaseModel):
     def _calculate_market_long(
         params: TradeParams, precision: int
     ) -> List[Tuple[float, ...]]:
+        entry_1 = params.real_price - params.market_spread
+        sl_1 = params.real_price - 2.22 * params.atr
+        tp_1 = entry_1 + 0.8 * (entry_1 - sl_1)
+        tp_2 = params.real_price + 2 * params.atr
         return [
-            (round(params.real_price - 0.9 * params.atr, precision),),  # Stop-loss
-            (round(params.real_price - params.market_spread, precision),),  # Entry
+            (round(sl_1, precision),),  # Stop-loss
+            (round(entry_1, precision),),  # Entry
             (
-                round(params.real_price + 0.3 * params.atr, precision),
-                round(params.real_price + params.atr, precision),
+                round(tp_1, precision),
+                round(tp_2, precision),
             ),  # Take-profit
         ]
 
@@ -51,12 +55,16 @@ class TargetResults(BaseModel):
     def _calculate_market_short(
         params: TradeParams, precision: int
     ) -> List[Tuple[float, ...]]:
+        entry_1 = params.real_price + params.market_spread
+        sl_1 = params.real_price + 2.22 * params.atr
+        tp_1 = entry_1 - 0.8 * (sl_1 - entry_1)
+        tp_2 = params.real_price - 2 * params.atr
         return [
-            (round(params.real_price + 0.9 * params.atr, precision),),  # Stop-loss
-            (round(params.real_price + params.market_spread, precision),),  # Entry
+            (round(sl_1, precision),),  # Stop-loss
+            (round(entry_1, precision),),  # Entry
             (
-                round(params.real_price - 0.3 * params.atr, precision),
-                round(params.real_price - params.atr, precision),
+                round(tp_1, precision),
+                round(tp_2, precision),
             ),  # Take-profit
         ]
 
@@ -66,22 +74,29 @@ class TargetResults(BaseModel):
     ) -> List[Tuple[float, ...]]:
         entry_1 = params.real_price - 0.25 * params.atr
         entry_2 = params.real_price - params.atr
+        sl_1 = params.real_price - 2.5 * params.atr
+        sl_2 = params.real_price - 3.5 * params.atr
+        tp_1_1 = entry_1 + 0.8 * (entry_1 - sl_1)
+        tp_1_2 = entry_1 + 1.16 * (entry_1 - sl_1)
+        tp_1_3 = entry_1 + 2 * (entry_1 - sl_1)
+        tp_2_3 = entry_2 + 5 * params.atr
+
         return [
             (
-                round(params.real_price - 2.5 * params.atr, precision),
-                round(params.real_price - 3.5 * params.atr, precision),
+                round(sl_1, precision),
+                round(sl_2, precision),
             ),  # Stop-loss
             (
                 round(entry_1, precision),
                 round(entry_2, precision),
             ),  # Entry
             (
-                round(entry_1 + 0.3 * params.atr, precision),
-                round(entry_1 + params.atr, precision),
-                round(entry_1 + 5 * params.atr, precision),
-                round(entry_2 + 0.3 * params.atr, precision),
-                round(entry_2 + params.atr, precision),
-                round(entry_2 + 5 * params.atr, precision),
+                round(tp_1_1, precision),
+                round(tp_1_2, precision),
+                round(tp_1_3, precision),
+                round(tp_1_1, precision),
+                round(tp_1_2, precision),
+                round(tp_2_3, precision),
             ),  # Take-profit
         ]
 
@@ -91,21 +106,27 @@ class TargetResults(BaseModel):
     ) -> List[Tuple[float, ...]]:
         entry_1 = params.real_price + 0.25 * params.atr
         entry_2 = params.real_price + params.atr
+        sl_1 = params.real_price + 2.5 * params.atr
+        sl_2 = params.real_price + 3.5 * params.atr
+        tp_1_1 = entry_1 - 0.8 * (sl_1 - entry_1)
+        tp_1_2 = entry_1 - 1.16 * (sl_1 - entry_1)
+        tp_1_3 = entry_1 - 2 * (sl_1 - entry_1)
+        tp_2_3 = entry_2 - 5 * params.atr
         return [
             (
-                round(params.real_price + 2.5 * params.atr, precision),
-                round(params.real_price + 3.5 * params.atr, precision),
+                round(sl_1, precision),
+                round(sl_2, precision),
             ),  # Stop-loss
             (
                 round(entry_1, precision),
                 round(entry_2, precision),
             ),  # Entry
             (
-                round(entry_1 - 0.3 * params.atr, precision),
-                round(entry_1 - params.atr, precision),
-                round(entry_1 - 5 * params.atr, precision),
-                round(entry_2 - 0.3 * params.atr, precision),
-                round(entry_2 - params.atr, precision),
-                round(entry_2 - 5 * params.atr, precision),
+                round(tp_1_1, precision),
+                round(tp_1_2, precision),
+                round(tp_1_3, precision),
+                round(tp_1_1, precision),
+                round(tp_1_2, precision),
+                round(tp_2_3, precision),
             ),  # Take-profit
         ]
