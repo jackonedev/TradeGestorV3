@@ -4,7 +4,7 @@ import os
 # para hacer requests al exchange BingX
 URL = "https://open-api.bingx.com"
 KLINES_SERVICE = URL + "/openApi/swap/v2/quote/klines"
-KLINES_LIMIT = 555
+KLINES_LIMIT = 1000
 
 
 # Configuración de directorios del proyecto
