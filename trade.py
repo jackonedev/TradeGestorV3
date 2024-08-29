@@ -34,7 +34,7 @@ def account_settings():
 
 def trade_settings():
     global direction, currency, live, market, limit
-    direction = "long"
+    direction = "short"
     currency = "USDT"
     live = True
     market = True
@@ -88,7 +88,10 @@ if __name__ == "__main__":
             raise ValueError("Ya existen ordenes en el sentido indicado")
 
         lev = orders_list[0].get("lev")
+        # handling edge cases
         lev_res = switch_leverage(symbol, direction.upper(), lev)
+        # if lev_res.get("code") == 80014 and lev_res.get("msg") == "Invalid parameters, err:leverage: Key: 'APISetLeverageRequest.Leverage' Error:Field validation for 'Leverage' failed on the 'gt' tag.":
+        #    print("Probablemente estés operando en demasiadas temporalidades de forma simultánea")
         assert (
             lev_res.get("code") == 0
         ), f"Error al ajustar el apalancamiento: {lev_res}"
@@ -181,16 +184,16 @@ if __name__ == "__main__":
         # .7. Enviar Batch
         # .8. Almacenar batch en datasets/
         try:
-            batch_size = 4
-            counter = count(1)
+            batch_size = 3
+            counter = count()
             for i in range(0, len(partial_calls), batch_size):
                 batch = partial_calls[i : i + batch_size]
                 res_list = many_partial_threads(batch)
-                for j, res in enumerate(res_list):
+                for res in res_list:
                     c = next(counter)
-                    with open(f"{ASSET_PATH}/{asset}_request_{c}.json", "w") as f:
-                        f.write(json.dumps(orden_batches[j], indent=2))
-                    with open(f"{ASSET_PATH}/{asset}_response_{c}.json", "w") as f:
+                    with open(f"{ASSET_PATH}/{asset}_request_{c+1}.json", "w") as f:
+                        f.write(json.dumps(orden_batches[c], indent=2))
+                    with open(f"{ASSET_PATH}/{asset}_response_{c+1}.json", "w") as f:
                         f.write(json.dumps(res, indent=2))
                 time.sleep(0.2)
 
