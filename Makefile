@@ -6,9 +6,9 @@ install:
 # 	python -m pytest -vv tests/*.py
 
 format:
-	isort --profile=black --skip .venv_tg . &&\
+	isort --profile=black --skip .venv_tg --skip .env_aux . &&\
 	autopep8 --in-place ./*.py tools/*.py etl_feed/*.py &&\
-	black --line-length 88 . --exclude .venv_tg
+	black --line-length 88 . --exclude '(\.venv_tg|\.env_aux)'
 
 
 lint:

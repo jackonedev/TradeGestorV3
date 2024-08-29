@@ -167,3 +167,4 @@ cython_debug/
 datasets/*
 colab_*
 tg/contracts/*
+.env_aux

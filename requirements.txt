@@ -10,3 +10,6 @@ nbformat==5.10.4
 pandas_ta==0.3.14b
 ta-lib==0.4.32
 numpy==1.26.4
+# Auxiliary environment:
+# smartmoneyconcepts==0.0.24
+# gym-trading-env==0.3.3 
