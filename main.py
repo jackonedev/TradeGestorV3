@@ -19,10 +19,14 @@ def settings():
     Configuración inicial
     """
     global activos, temporalidades, download_html_plot, include_volume, OPTIMIZE_SQZM, REPLOT
-    activos = ["DOGE", "BTC", "ENS"]
+    activos = ["BTC"]
     temporalidades = []  # empty list = all temporalities
-    temporalidades = ["1h", "15m", "5m"]
-    temporalidades += ["4h"]
+    temporalidades = ["5m"]
+    # temporalidades += ["15m"]
+    # temporalidades += ["1h"]
+    # temporalidades += ["4h"]
+    # temporalidades += ["1d"]
+    # temporalidades += ["1w"]
     download_html_plot = True
     include_volume = True
     OPTIMIZE_SQZM = True
@@ -37,7 +41,10 @@ def main():
     # Ajuste manual de las ventana de extracción
     temp_mapping = TempMappingModel(
         t_1w=past_timestamp(600, "days"),
-        t_1h=past_timestamp(10, "days"),
+        t_4h=past_timestamp(60, "days"),
+        t_1h=past_timestamp(30, "days"),
+        t_15m=past_timestamp(3, "days"),
+        t_5m=past_timestamp(2, "days"),
     )
     if len(temporalidades) == 0:
         temporalidades = list(temp_mapping.to_dict().keys())
