@@ -15,7 +15,7 @@ from tools.plots import (
 )
 
 
-def load_3r_plots(df, activo, temporalidad, path):
+def load_3r_plots(df, activo, temporalidad, path, suffix=""):
     # Figure 1
     candlestick = create_candlestick(df)
     upper_band = create_scatter(df, "upper_BB", "upper_BB", "red")
@@ -114,7 +114,9 @@ def load_3r_plots(df, activo, temporalidad, path):
     plot_name = f"{activo}_{temporalidad} - [ATR] = {last_atr}"
     subplot_fig = make_3r_subplots([fig1, fig2, fig3], title=plot_name)
 
-    filename = f"{plot_name.split('-')[0].strip()}.html"
+    if suffix:
+        suffix = f"_{suffix}"
+    filename = f"{plot_name.split('-')[0].strip()}" + suffix + ".html"
     download_html(
         subplot_fig,
         os.path.join(path, os.path.join(path, filename)),

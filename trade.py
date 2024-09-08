@@ -28,15 +28,16 @@ from utils.utils import (
 def account_settings():
     global acc_vol, risk_pct, op_vol
     acc_vol = get_account_balance()
-    risk_pct = 0.01
+    risk_pct = 0.005
     op_vol = acc_vol * risk_pct
 
 
 def trade_settings():
-    global direction, currency, live, market, limit
-    direction = "short"
+    global direction, currency, live, execute, market, limit
+    direction = "long"
     currency = "USDT"
     live = True
+    execute = False
     market = True
     limit = True
 
@@ -92,6 +93,7 @@ if __name__ == "__main__":
         lev_res = switch_leverage(symbol, direction.upper(), lev)
         # if lev_res.get("code") == 80014 and lev_res.get("msg") == "Invalid parameters, err:leverage: Key: 'APISetLeverageRequest.Leverage' Error:Field validation for 'Leverage' failed on the 'gt' tag.":
         #    print("Probablemente estés operando en demasiadas temporalidades de forma simultánea")
+        #    print("Probablemente la temporalidad 1w falle, la cosa es 1d + 1w tiró el mismo error")
         assert (
             lev_res.get("code") == 0
         ), f"Error al ajustar el apalancamiento: {lev_res}"
@@ -188,19 +190,33 @@ if __name__ == "__main__":
             counter = count()
             for i in range(0, len(partial_calls), batch_size):
                 batch = partial_calls[i : i + batch_size]
-                res_list = many_partial_threads(batch)
-                for res in res_list:
+                if live and execute:
+                    res_list = many_partial_threads(batch)
+                    pass
+
+                for j in range(len(batch)):  # usar len(batch)
                     c = next(counter)
                     with open(f"{ASSET_PATH}/{asset}_request_{c+1}.json", "w") as f:
                         f.write(json.dumps(orden_batches[c], indent=2))
-                    with open(f"{ASSET_PATH}/{asset}_response_{c+1}.json", "w") as f:
-                        f.write(json.dumps(res, indent=2))
-                time.sleep(0.2)
+                    if live and execute:
+                        with open(
+                            f"{ASSET_PATH}/{asset}_response_{c+1}.json", "w"
+                        ) as f:
+                            f.write(json.dumps(res_list[j], indent=2))
+                time.sleep(0.25)
+
+                # for res in res_list:
+                #     c = next(counter)
+                #     with open(f"{ASSET_PATH}/{asset}_request_{c+1}.json", "w") as f:
+                #         f.write(json.dumps(orden_batches[c], indent=2))
+                #     with open(f"{ASSET_PATH}/{asset}_response_{c+1}.json", "w") as f:
+                #         f.write(json.dumps(res, indent=2))
+                # time.sleep(0.2)
 
         except Exception as e:
             print(f"Error al enviar el batch: {e}")
-            with open(f"{ASSET_PATH}/error.txt", "w") as f:
-                f.write(str(e))
+            with open(f"{ASSET_PATH}/error.txt", "a") as f:
+                f.write(str(e) + "\n")
         finally:
             with open(f"{ASSET_PATH}/acc_init_balance.txt", "w") as f:
                 date = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

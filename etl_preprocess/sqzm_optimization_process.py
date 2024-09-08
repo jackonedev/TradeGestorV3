@@ -18,7 +18,7 @@ def optimize_sqzm_parameters():
 
     ## OPTIMIZING SQUEEZE MOMENTUM INDICATOR PARAMETERS ##
     PARAMETROS_ORIGINALES = dict(
-        length=20, mult=1.5, length_KC=20, mult_KC=1, n_atr=10, use_EMA=True
+        length=20, mult=1.5, length_KC=20, mult_KC=1, n_atr=12, use_EMA=True
     )
     length_BBs = [8, 12, 14, 18, 20, 22, 26]
     mult_range = [1.5]

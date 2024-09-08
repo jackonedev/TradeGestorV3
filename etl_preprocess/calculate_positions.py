@@ -216,6 +216,7 @@ def adjust_positions_leverage(
         min_liq = min(pos["liq"] for pos in operations)
 
         if min_lev >= max_leverage:
+            print(f"UTILIZANDO APALANCAMIENTO MAXIMO: {max_leverage}")  # TODO: Borrar
             min_lev = max_leverage
             min_liq = "Not calculated"
 
@@ -229,9 +230,10 @@ def adjust_positions_leverage(
 
             adj_factor = lev_actual / min_lev
 
-            qty_per_entry_ajustada = np.array(
-                [qty * adj_factor for qty in pos["qty_per_entry"]]
-            )
+            qty_per_entry_ajustada = np.array([qty * 1 for qty in pos["qty_per_entry"]])
+            # )#TODO: me apalanco más para comprar más o me apalanco más para comprar lo mismo?
+            # qty_per_entry_ajustada = np.array(
+            #     [qty * adj_factor for qty in pos["qty_per_entry"]]
             vol_per_entry_ajustada = pos["vol_per_entry"] * adj_factor
             vol_trade = pos["vol_trade"] * adj_factor
 

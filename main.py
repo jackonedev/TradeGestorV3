@@ -19,12 +19,16 @@ def settings():
     Configuración inicial
     """
     global activos, temporalidades, download_html_plot, include_volume, OPTIMIZE_SQZM, REPLOT
+    activos = ["APE", "LTC", "ADA", "ENS", "ICP", "DOGE", "LINK"]
+    activos = ["ICP"]
+    activos = ["ENS"]
     activos = ["BTC"]
+
     temporalidades = []  # empty list = all temporalities
-    temporalidades = ["5m"]
-    # temporalidades += ["15m"]
-    # temporalidades += ["1h"]
-    # temporalidades += ["4h"]
+    temporalidades += ["5m"]
+    temporalidades += ["15m"]
+    temporalidades += ["1h"]
+    temporalidades += ["4h"]
     # temporalidades += ["1d"]
     # temporalidades += ["1w"]
     download_html_plot = True
