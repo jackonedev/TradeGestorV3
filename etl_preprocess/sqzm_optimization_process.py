@@ -1,6 +1,6 @@
 import json
 from functools import partial
-from itertools import count, product
+from itertools import product
 from random import randint
 
 from tools.optimizer import many_partial_processes
@@ -11,97 +11,121 @@ from utils.utils import (
 )
 
 
-def optimize_sqzm_parameters():
-    ## INITIAL VARIABLES ##
+def load_data():
+    """Load the dataset and the corresponding download paths"""
     download_paths = obtain_most_recent_download_directory_paths()
     downloaded_dfs = obtain_most_recent_downloaded_datasets()
+    return download_paths, downloaded_dfs
 
-    ## OPTIMIZING SQUEEZE MOMENTUM INDICATOR PARAMETERS ##
-    PARAMETROS_ORIGINALES = dict(
-        length=20, mult=1.5, length_KC=20, mult_KC=1, n_atr=12, use_EMA=True
-    )
-    length_BBs = [8, 12, 14, 18, 20, 22, 26]
+
+def generate_parameter_combinations():
+    """Generate a combination of possible parameters to be assigned to the Squeeze Momentum Indicator"""
+    original_params = {
+        "length": 20,
+        "mult": 1.5,
+        "length_KC": 20,
+        "mult_KC": 1,
+        "n_atr": 12,
+        "use_EMA": True,
+    }
+    length_bbs = [8, 12, 14, 18, 20, 22, 26]
     mult_range = [1.5]
-    length_KCs = [8, 12, 14, 18, 20, 22, 26]
-    mult_KC_range = [1]
+    length_kcs = [8, 12, 14, 18, 20, 22, 26]
+    mult_kc_range = [1]
     param_combinations = list(
-        product(length_BBs, mult_range, length_KCs, mult_KC_range)
+        product(length_bbs, mult_range, length_kcs, mult_kc_range)
     )
+    return original_params, param_combinations
 
-    ## APPLY SQUEEZE MOMENTUM INDICATOR ##
-    DATASETS_PARTIAL_DICT = {}
-    DATASETS_PARAM_DICT = {}
-    for activo, temporalidad_dict in downloaded_dfs.items():
-        DATASETS_PARTIAL_DICT[activo] = {}
-        DATASETS_PARAM_DICT[activo] = {}
-        for temporalidad, df in temporalidad_dict.items():
-            c = count()
-            PARTIAL_LIST = []
-            PARAM_LIST = []
+
+def apply_squeeze_momentum_indicator(
+    downloaded_dfs, original_params, param_combinations
+):
+    """Apply the Squeeze Momentum Indicator to the datasets with different parameter combinations"""
+    datasets_partial_dict = {}
+    datasets_param_dict = {}
+    for asset, timeframe_dict in downloaded_dfs.items():
+        datasets_partial_dict[asset] = {}
+        datasets_param_dict[asset] = {}
+        for timeframe, df in timeframe_dict.items():
+            partial_list = []
+            param_list = []
             for x in param_combinations:
-                p = PARAMETROS_ORIGINALES.copy()
-                p.update(dict(zip(["length", "mult", "length_KC", "mult_KC"], x)))
-                PARTIAL_LIST.append(partial(squeeze_momentum_indicator, df, **p))
-                PARAM_LIST.append(p.copy())
-            DATASETS_PARTIAL_DICT[activo][temporalidad] = PARTIAL_LIST.copy()
-            DATASETS_PARAM_DICT[activo][temporalidad] = PARAM_LIST.copy()
-    # Ejecutar optimización
-    RESULT_DICT = {}
-    for activo, temporalidad_dict in DATASETS_PARTIAL_DICT.items():
-        RESULT_DICT[activo] = {}
-        for temporalidad, partial_list in temporalidad_dict.items():
-            RESULT_DICT[activo][temporalidad] = {}
-            results = many_partial_processes(partial_list)
-            RESULT_LIST = []
-            for i, result in enumerate(results):
-                RESULT_LIST.append(
-                    (DATASETS_PARAM_DICT[activo][temporalidad][i], result.copy())
-                )
-            RESULT_DICT[activo][temporalidad] = RESULT_LIST.copy()
+                params = original_params.copy()
+                params.update(dict(zip(["length", "mult", "length_KC", "mult_KC"], x)))
+                partial_list.append(partial(squeeze_momentum_indicator, df, **params))
+                param_list.append(params.copy())
+            datasets_partial_dict[asset][timeframe] = partial_list.copy()
+            datasets_param_dict[asset][timeframe] = param_list.copy()
+    return datasets_partial_dict, datasets_param_dict
 
-    ## OBTENER CORRELACION Y MEJORES PARAMETROS ##
-    BEST_CORR_DICT = {}
-    CORR_DICT = {}
-    for activo, temporalidad_dict in RESULT_DICT.items():
-        BEST_CORR_DICT[activo] = {}
-        CORR_DICT[activo] = {}
-        for temporalidad, results_list in temporalidad_dict.items():
+
+def execute_optimization(datasets_partial_dict, datasets_param_dict):
+    """Execute the optimization using multiple processes"""
+    result_dict = {}
+    for asset, timeframe_dict in datasets_partial_dict.items():
+        result_dict[asset] = {}
+        for timeframe, partial_list in timeframe_dict.items():
+            result_dict[asset][timeframe] = {}
+            results = many_partial_processes(partial_list)
+            result_list = []
+            for i, result in enumerate(results):
+                result_list.append(
+                    (datasets_param_dict[asset][timeframe][i], result.copy())
+                )
+            result_dict[asset][timeframe] = result_list.copy()
+    return result_dict
+
+
+def calculate_correlation(result_dict):
+    """Calculate the correlation between the close price and the Squeeze Momentum Indicator"""
+    best_corr_dict = {}
+    corr_dict = {}
+    for asset, timeframe_dict in result_dict.items():
+        best_corr_dict[asset] = {}
+        corr_dict[asset] = {}
+        for timeframe, results_list in timeframe_dict.items():
             best_corr = 0
             best_params = None
-            CORR_LIST = []
+            corr_list = []
             for params, df in results_list:
-                p = PARAMETROS_ORIGINALES.copy()
-                p.update(
-                    dict(
-                        zip(
-                            ["length", "mult", "length_KC", "mult_KC"],
-                            params.values(),
-                        )
-                    )
-                )
                 corr = df["close"].corr(df["SQZMOM_value"])
-                CORR_LIST.append({"corr": corr, "params": p})
+                corr_list.append({"corr": corr, "params": params})
                 if corr > best_corr:
                     best_corr = corr
-                    best_params = p.copy()
+                    best_params = params.copy()
 
-            CORR_DICT[activo][temporalidad] = CORR_LIST
-            BEST_CORR_DICT[activo][temporalidad] = {
+            corr_dict[asset][timeframe] = corr_list
+            best_corr_dict[asset][timeframe] = {
                 "best_corr": best_corr,
                 "best_params": best_params,
             }
+    return best_corr_dict, corr_dict
 
-    ## GUARDAR RESULTADOS ##
-    for activo, temporalidad_dict in BEST_CORR_DICT.items():
-        for temporalidad, corr_dict in temporalidad_dict.items():
-            dir_path = download_paths[activo][temporalidad]
+
+def save_results(download_paths, best_corr_dict, corr_dict):
+    """Save the results to JSON files"""
+    for asset, timeframe_dict in best_corr_dict.items():
+        for timeframe, corr in timeframe_dict.items():
+            dir_path = download_paths[asset][timeframe]
             rand = randint(100, 999)
             with open(
-                f"{dir_path}/{activo}_{temporalidad}_sqzmom_best_params_{rand}.json",
-                "w",
+                f"{dir_path}/{asset}_{timeframe}_sqzmom_best_params_{rand}.json", "w"
             ) as f:
-                json.dump(corr_dict, f)
+                json.dump(corr, f)
             with open(
-                f"{dir_path}/{activo}_{temporalidad}_sqzmom_params_{rand}.json", "w"
+                f"{dir_path}/{asset}_{timeframe}_sqzmom_params_{rand}.json", "w"
             ) as f:
-                json.dump(json.dumps(CORR_DICT[activo][temporalidad], indent=2), f)
+                json.dump(json.dumps(corr_dict[asset][timeframe], indent=2), f)
+
+
+def optimize_sqzm_parameters():
+    """Execute the optimization process of the Squeeze Momentum Indicator parameters"""
+    download_paths, downloaded_dfs = load_data()
+    original_params, param_combinations = generate_parameter_combinations()
+    datasets_partial_dict, datasets_param_dict = apply_squeeze_momentum_indicator(
+        downloaded_dfs, original_params, param_combinations
+    )
+    result_dict = execute_optimization(datasets_partial_dict, datasets_param_dict)
+    best_corr_dict, corr_dict = calculate_correlation(result_dict)
+    save_results(download_paths, best_corr_dict, corr_dict)
