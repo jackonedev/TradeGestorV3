@@ -34,7 +34,7 @@ def account_settings():
 
 def trade_settings():
     global direction, currency, live, execute, market, limit
-    direction ="long" 
+    direction = "long"
     currency = "USDT"
     live = True
     execute = False
@@ -194,19 +194,21 @@ if __name__ == "__main__":
                     res_list = many_partial_threads(batch)
                     pass
 
-                for j in range(len(batch)):#usar len(batch)
+                for j in range(len(batch)):
                     c = next(counter)
                     with open(f"{ASSET_PATH}/{asset}_request_{c+1}.json", "w") as f:
                         f.write(json.dumps(orden_batches[c], indent=2))
                     if live and execute:
-                        with open(f"{ASSET_PATH}/{asset}_response_{c+1}.json", "w") as f:
+                        with open(
+                            f"{ASSET_PATH}/{asset}_response_{c+1}.json", "w"
+                        ) as f:
                             f.write(json.dumps(res_list[j], indent=2))
                 time.sleep(0.25)
 
         except Exception as e:
             print(f"Error al enviar el batch: {e}")
             with open(f"{ASSET_PATH}/error.txt", "a") as f:
-                f.write(str(e) + '\n')
+                f.write(str(e) + "\n")
         finally:
             with open(f"{ASSET_PATH}/acc_init_balance.txt", "w") as f:
                 date = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
