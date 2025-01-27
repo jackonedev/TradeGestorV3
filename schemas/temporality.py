@@ -28,6 +28,9 @@ class TempMappingModel(BaseModel):
     t_1h: Optional[int] = Field(
         default_factory=lambda: past_timestamp(8, "days", TempMappingModel._now.default)
     )
+    t_30m: Optional[int] = Field(
+        default_factory=lambda: past_timestamp(4, "days", TempMappingModel._now.default)
+    )
     t_15m: Optional[int] = Field(
         default_factory=lambda: past_timestamp(
             36, "hours", TempMappingModel._now.default
@@ -51,6 +54,7 @@ class TempMappingModel(BaseModel):
             "1d": self.t_1d,
             "4h": self.t_4h,
             "1h": self.t_1h,
+            "30m": self.t_30m,
             "15m": self.t_15m,
             "5m": self.t_5m,
         }

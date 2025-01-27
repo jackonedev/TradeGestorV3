@@ -22,15 +22,17 @@ def settings():
     activos = ["APE", "LTC", "ADA", "ENS", "ICP", "DOGE", "LINK"]
     activos = ["ICP"]
     activos = ["ENS"]
+    activos = ["BTC", "ETH"]
     activos = ["BTC"]
 
     temporalidades = []  # empty list = all temporalities
-    temporalidades += ["5m"]
-    temporalidades += ["15m"]
-    temporalidades += ["1h"]
+    # temporalidades += ["5m"]
+    # temporalidades += ["15m"]
+    temporalidades += ["30m"]
+    # temporalidades += ["1h"]
     temporalidades += ["4h"]
-    # temporalidades += ["1d"]
-    # temporalidades += ["1w"]
+    temporalidades += ["1d"]
+    temporalidades += ["1w"]
     download_html_plot = True
     include_volume = True
     OPTIMIZE_SQZM = True
@@ -47,6 +49,7 @@ def main():
         t_1w=past_timestamp(600, "days"),
         t_4h=past_timestamp(60, "days"),
         t_1h=past_timestamp(30, "days"),
+        t_30m=past_timestamp(4, "days"),
         t_15m=past_timestamp(3, "days"),
         t_5m=past_timestamp(2, "days"),
     )
