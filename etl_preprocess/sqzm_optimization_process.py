@@ -28,9 +28,9 @@ def generate_parameter_combinations():
         "n_atr": 12,
         "use_EMA": True,
     }
-    length_bbs = [8, 12, 14, 18, 20, 22, 26]
+    length_bbs = [20]
     mult_range = [1.5]
-    length_kcs = [8, 12, 14, 18, 20, 22, 26]
+    length_kcs = list(range(8, 27, 2))
     mult_kc_range = [1]
     param_combinations = list(
         product(length_bbs, mult_range, length_kcs, mult_kc_range)
